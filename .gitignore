@@ -1,0 +1,19 @@
+# Dependency directories
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment variables (Secret keys ko ignore karo)
+.env
+.env.local
+client/.env
+server/.env
+
+# Lekin .env.example files ko hamesha allow karo
+!.env.example
+!client/.env.example
+!server/.env.example
+
+# Production build
+client/dist/
+server/dist/
