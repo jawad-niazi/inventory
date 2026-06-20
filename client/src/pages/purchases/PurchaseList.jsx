@@ -3,20 +3,20 @@ import { Link, useSearchParams } from "react-router-dom";
 import ShopSelector from "../../components/common/ShopSelector";
 import { apiFetch } from "../../utils/api";
 
-export default function Invoices() {
+export default function PurchaseList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [shopId, setShopId] = useState(searchParams.get("shop_id") || "");
-  const [invoices, setInvoices] = useState([]);
+  const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filterInvoiceNum, setFilterInvoiceNum] = useState("");
+  const [filterSupplier, setFilterSupplier] = useState("");
 
   const load = async () => {
     if (!shopId) return;
     setLoading(true);
-    const res = await apiFetch(`/api/invoices?shop_id=${shopId}`);
+    const res = await apiFetch(`/api/purchases?shop_id=${shopId}`);
     if (res.ok) {
       const body = await res.json();
-      setInvoices(body.invoices || []);
+      setPurchases(body.purchases || []);
     }
     setLoading(false);
   };
@@ -29,13 +29,25 @@ export default function Invoices() {
     if (shopId) setSearchParams({ shop_id: shopId });
   }, [shopId, setSearchParams]);
 
-  const filtered = invoices.filter((inv) =>
-    inv.invoice_number.toLowerCase().includes(filterInvoiceNum.toLowerCase())
+  const filtered = purchases.filter((p) =>
+    (p.suppliers?.name || "Direct Supplier")
+      .toLowerCase()
+      .includes(filterSupplier.toLowerCase())
   );
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-slate-900 mb-6">Invoices</h2>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-2xl font-bold text-slate-900">Procurement (Purchases)</h2>
+        {shopId && (
+          <Link
+            to={`/purchases/new?shop_id=${shopId}`}
+            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+          >
+            Create Purchase Order
+          </Link>
+        )}
+      </div>
 
       <ShopSelector value={shopId} onChange={setShopId} />
 
@@ -43,15 +55,15 @@ export default function Invoices() {
         <>
           <div className="mb-4">
             <input
-              placeholder="Search by invoice number (e.g. INV-)..."
-              value={filterInvoiceNum}
-              onChange={(e) => setFilterInvoiceNum(e.target.value)}
+              placeholder="Search by supplier..."
+              value={filterSupplier}
+              onChange={(e) => setFilterSupplier(e.target.value)}
               className="rounded-md border border-slate-350 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 w-full max-w-md"
             />
           </div>
 
           {loading ? (
-            <p className="text-slate-650">Loading invoices...</p>
+            <p className="text-slate-600">Loading...</p>
           ) : (
             <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
               <table className="min-w-full divide-y divide-slate-200">
@@ -61,13 +73,13 @@ export default function Invoices() {
                       Date
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Invoice Number
+                      Supplier
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Sale Reference ID
+                      Created By
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Total
+                      Total Cost
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
                       Status
@@ -78,39 +90,37 @@ export default function Invoices() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {filtered.map((inv) => (
-                    <tr key={inv.id}>
+                  {filtered.map((p) => (
+                    <tr key={p.id}>
                       <td className="px-4 py-3 text-sm text-slate-600">
-                        {new Date(inv.created_at).toLocaleString()}
+                        {new Date(p.created_at).toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 text-sm font-bold text-slate-900 font-mono">
-                        {inv.invoice_number}
+                      <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                        {p.suppliers?.name || "Direct Supplier"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-500 font-mono text-xs">
-                        {inv.sale_id || "—"}
+                      <td className="px-4 py-3 text-sm text-slate-600">
+                        {p.app_users?.email || "—"}
                       </td>
                       <td className="px-4 py-3 text-sm font-bold text-slate-900">
-                        ${Number(inv.sales?.total || 0).toFixed(2)}
+                        ${Number(p.total_amount).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span
                           className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            inv.status === "paid"
+                            p.status === "received"
                               ? "bg-emerald-100 text-emerald-800"
-                              : inv.status === "cancelled"
-                              ? "bg-red-100 text-red-800"
                               : "bg-amber-100 text-amber-800"
                           }`}
                         >
-                          {inv.status}
+                          {p.status || "received"}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <Link
-                          to={`/invoices/${inv.id}?shop_id=${shopId}`}
+                          to={`/purchases/${p.id}?shop_id=${shopId}`}
                           className="text-emerald-600 hover:text-emerald-700 font-semibold"
                         >
-                          View & Print
+                          View Details
                         </Link>
                       </td>
                     </tr>
@@ -121,7 +131,7 @@ export default function Invoices() {
                         colSpan={6}
                         className="px-4 py-8 text-center text-sm text-slate-500"
                       >
-                        No invoices found.
+                        No purchase orders found.
                       </td>
                     </tr>
                   )}

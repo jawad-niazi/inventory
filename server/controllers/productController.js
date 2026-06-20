@@ -8,11 +8,17 @@ exports.list = async (req, res, next) => {
     const shopId = resolveShopId(req)
     if (!assertShopAccess(req.appUser, shopId, res)) return
 
-    const { data, error } = await supabase
+    const q = req.query.q
+    let query = supabase
       .from('products')
       .select('*, categories(id, name), inventory(quantity)')
       .eq('shop_id', shopId)
-      .order('created_at', { ascending: false })
+
+    if (q) {
+      query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%`)
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) return next(error)
 
@@ -48,6 +54,36 @@ exports.getOne = async (req, res, next) => {
         inventory: undefined,
       },
     })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// GET /api/products/:id/image
+// Returns the product's public image URL as a redirect, or 404 if none exists.
+// This prevents the request from accidentally matching getOne and crashing.
+exports.serveImage = async (req, res, next) => {
+  try {
+    const { id } = req.params
+
+    const { data, error } = await supabase
+      .from('products')
+      .select('image_url, shop_id')
+      .eq('id', id)
+      .single()
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Product not found' })
+    }
+    if (!assertShopAccess(req.appUser, data.shop_id, res)) return
+
+    if (!data.image_url) {
+      // No image uploaded — return 404 rather than crashing with 500
+      return res.status(404).json({ error: 'No image available for this product' })
+    }
+
+    // Redirect the browser/client directly to the Supabase Storage public URL
+    return res.redirect(data.image_url)
   } catch (err) {
     next(err)
   }

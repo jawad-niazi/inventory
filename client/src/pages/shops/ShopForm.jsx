@@ -7,7 +7,7 @@ function getToken() {
 }
 
 const inputClass =
-  "w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+  "w-full rounded-md border border-slate-350 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
 
 export default function ShopForm() {
   const { id } = useParams();
@@ -20,6 +20,7 @@ export default function ShopForm() {
     status: "active",
   });
   const [loading, setLoading] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState(null);
 
   useEffect(() => {
     if (!id) return;
@@ -62,23 +63,64 @@ export default function ShopForm() {
       },
       body: JSON.stringify(form),
     });
-    if (res.ok) navigate("/shops");
+    if (res.ok) {
+      if (method === "POST") {
+        const body = await res.json();
+        if (body.credentials) {
+          setCreatedCredentials(body.credentials);
+          return;
+        }
+      }
+      navigate("/shops");
+    } else {
+      const body = await res.json();
+      alert(body.error || "Save failed");
+    }
   };
+
+  if (createdCredentials) {
+    return (
+      <div className="max-w-md mx-auto my-8 p-6 bg-slate-900 border border-slate-800 rounded-lg shadow-lg text-slate-100">
+        <h3 className="text-xl font-bold text-emerald-400 mb-4">Shop Onboarded Successfully</h3>
+        <p className="text-sm text-slate-350 mb-4">
+          A new tenant user account has been automatically created for this shop. Please copy the temporary credentials below:
+        </p>
+        <div className="bg-slate-950 p-4 rounded border border-slate-800 space-y-2 mb-6 font-mono text-sm">
+          <div>
+            <span className="text-slate-500">Email:</span> <span className="text-white select-all">{createdCredentials.email}</span>
+          </div>
+          <div>
+            <span className="text-slate-500">Password:</span> <span className="text-white select-all">{createdCredentials.password}</span>
+          </div>
+          <div>
+            <span className="text-slate-500">Role:</span> <span className="text-emerald-400">{createdCredentials.role}</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate("/shops")}
+          className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition-colors"
+        >
+          Got it, Go to Shop List
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg">
-      <h2 className="mb-6 text-2xl font-bold text-gray-900">
+      <h2 className="mb-6 text-2xl font-bold text-slate-900">
         {id ? "Edit Shop" : "Create Shop"}
       </h2>
       {loading ? (
-        <div className="text-gray-600">Loading...</div>
+        <div className="text-slate-650">Loading...</div>
       ) : (
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
+          className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
         >
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700">
               Name
             </label>
             <input
@@ -90,7 +132,7 @@ export default function ShopForm() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700">
               Address
             </label>
             <input
@@ -101,7 +143,7 @@ export default function ShopForm() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700">
               Phone
             </label>
             <input
@@ -112,7 +154,7 @@ export default function ShopForm() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700">
               Email
             </label>
             <input
@@ -124,7 +166,7 @@ export default function ShopForm() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-slate-700">
               Status
             </label>
             <select
@@ -140,14 +182,14 @@ export default function ShopForm() {
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
             >
               Save
             </button>
             <button
               type="button"
               onClick={() => navigate("/shops")}
-              className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+              className="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-700 transition-colors"
             >
               Cancel
             </button>

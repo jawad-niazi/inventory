@@ -11,6 +11,8 @@ const {
 router.use(loadProfile)
 
 router.get('/', listProducts, ctrl.list)
+// IMPORTANT: specific sub-routes must come BEFORE the generic '/:id' route
+router.get('/:id/image', ctrl.serveImage)
 router.get('/:id', ctrl.getOne)
 router.post('/', createProduct, ctrl.create)
 router.put('/:id', updateProduct, ctrl.update)

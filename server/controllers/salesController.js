@@ -12,8 +12,12 @@ exports.list = async (req, res, next) => {
       .eq('shop_id', shopId)
       .order('created_at', { ascending: false })
 
-    if (error) return next(error)
-    res.json({ sales: data })
+    if (error) {
+      console.error('[salesController.list] Supabase error:', error.message)
+      return next(error)
+    }
+    // Always return an array — never null — so the frontend never crashes on .map()
+    res.json({ sales: data ?? [] })
   } catch (err) {
     next(err)
   }

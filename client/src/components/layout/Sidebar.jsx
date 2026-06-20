@@ -4,10 +4,10 @@ import { useAuth } from "../../hooks/useAuth";
 import { APP_NAME } from "../../constants";
 
 const navLinkClass = (active) =>
-  `block rounded-md px-3 py-2 text-sm font-medium ${
+  `block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
     active
-      ? "bg-indigo-700 text-white"
-      : "text-indigo-100 hover:bg-indigo-600 hover:text-white"
+      ? "bg-emerald-600 text-white"
+      : "text-slate-300 hover:bg-slate-850 hover:text-white"
   }`;
 
 export default function Sidebar() {
@@ -16,7 +16,7 @@ export default function Sidebar() {
 
   if (loading || profileLoading) {
     return (
-      <aside className="w-56 shrink-0 bg-indigo-800 p-4 text-indigo-100">
+      <aside className="w-56 shrink-0 bg-slate-900 p-4 text-slate-400 border-r border-slate-800">
         Loading...
       </aside>
     );
@@ -27,6 +27,10 @@ export default function Sidebar() {
     { to: "/products", label: "Products" },
     { to: "/categories", label: "Categories" },
     { to: "/inventory", label: "Inventory" },
+    { to: "/sales", label: "Sales" },
+    { to: "/purchases", label: "Purchases" },
+    { to: "/transfers", label: "Transfers" },
+    { to: "/invoices", label: "Invoices" },
   ];
 
   if (role === "super_admin") {
@@ -39,9 +43,9 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col bg-indigo-800">
-      <div className="border-b border-indigo-700 px-4 py-5">
-        <p className="text-xs uppercase tracking-wide text-indigo-200">
+    <aside className="flex w-56 shrink-0 flex-col bg-slate-900 border-r border-slate-800">
+      <div className="border-b border-slate-800 px-4 py-5">
+        <p className="text-sm font-bold uppercase tracking-wider text-emerald-500">
           {APP_NAME}
         </p>
       </div>
