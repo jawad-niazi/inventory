@@ -150,7 +150,6 @@ exports.create = async (req, res, next) => {
       category_id,
       low_stock_threshold,
       status,
-      initial_quantity,
     } = req.body
 
     // Prevent duplicate products for same shop by name + model_name
@@ -187,7 +186,9 @@ exports.create = async (req, res, next) => {
 
     if (error) return next(error)
 
-    const qty = parseInt(initial_quantity, 10) || 0
+    // Products are created as registry-only. Stock starts at 0 and is
+    // increased via Purchase Orders when marked received.
+    const qty = 0
     const { error: invError } = await supabase.from('inventory').insert({
       shop_id: shopId,
       product_id: product.id,
@@ -199,15 +200,7 @@ exports.create = async (req, res, next) => {
 
     if (invError) return next(invError)
 
-    if (qty !== 0) {
-      await supabase.from('inventory_adjustments').insert({
-        shop_id: shopId,
-        product_id: product.id,
-        quantity_change: qty,
-        reason: 'Initial stock',
-        adjusted_by: req.appUser.id,
-      })
-    }
+    // No adjustment recorded because initial qty is zero
 
     // If an image file was uploaded, push to Cloudinary and update the product
     if (req.file && req.file.buffer) {

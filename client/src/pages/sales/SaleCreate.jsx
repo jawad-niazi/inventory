@@ -89,6 +89,16 @@ export default function SaleCreate() {
     }
   };
 
+  const updateCartPrice = (productId, price) => {
+    setError(null);
+    const p = Number(price) || 0;
+    setCart(
+      cart.map((i) =>
+        i.product_id === productId ? { ...i, unit_price: p } : i,
+      ),
+    );
+  };
+
   // Fetch customers once
   const loadCustomers = async () => {
     if (!shopId) return;
@@ -231,6 +241,7 @@ export default function SaleCreate() {
       shop_id: shopId,
       customer_id: selectedCustomerId || null,
       total,
+      total_profit: cartProfit,
       items: cart.map((item) => ({
         product_id: item.product_id,
         quantity: item.quantity,
@@ -452,16 +463,32 @@ export default function SaleCreate() {
                     <p className="text-sm font-medium text-slate-900">
                       {item.name}
                     </p>
-                    <p className="text-xs text-slate-500">
-                      Rs. {item.unit_price.toFixed(2)} x {item.quantity}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Cost: Rs. {(item.purchase_price ?? 0).toFixed(2)} |
+                    <div className="flex items-center gap-2 mt-1">
+                      <label className="text-xs text-slate-500">Rs.</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={item.unit_price}
+                        onChange={(e) =>
+                          updateCartPrice(item.product_id, e.target.value)
+                        }
+                        className="w-24 rounded border border-slate-200 px-2 py-1 text-xs"
+                      />
+                      <span className="text-xs text-slate-500">
+                        x {item.quantity}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-500 mt-1">
+                      (Cost: Rs. {(item.purchase_price ?? 0).toFixed(2)} |
                       Profit: Rs.{" "}
                       {(
-                        (item.unit_price - (item.purchase_price ?? 0)) *
-                        item.quantity
+                        (Number(item.unit_price || 0) -
+                          Number(item.purchase_price || 0)) *
+                        Number(item.quantity || 0)
                       ).toFixed(2)}
+                      )
                     </p>
                   </div>
 

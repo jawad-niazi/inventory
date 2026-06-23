@@ -22,7 +22,6 @@ export default function ProductForm() {
     price: "0",
     category_id: "",
     low_stock_threshold: "0",
-    initial_quantity: "0",
   });
 
   useEffect(() => {
@@ -50,7 +49,6 @@ export default function ProductForm() {
           price: String(p.price ?? 0),
           category_id: p.category_id || "",
           low_stock_threshold: String(p.low_stock_threshold ?? 0),
-          initial_quantity: String(p.quantity ?? 0),
         });
         if (p.image_url) setPreview(p.image_url);
       }
@@ -122,10 +120,6 @@ export default function ProductForm() {
       low_stock_threshold: parseInt(form.low_stock_threshold, 10) || 0,
       // status defaults to 'active' on the backend — removed from form
     };
-
-    if (!id) {
-      payload.initial_quantity = parseInt(form.initial_quantity, 10) || 0;
-    }
 
     const method = id ? "PUT" : "POST";
     const url = id ? `/api/products/${id}` : "/api/products";
@@ -315,22 +309,7 @@ export default function ProductForm() {
             </select>
           </div>
 
-          {/* Initial Quantity (create only) */}
-          {!id && (
-            <div>
-              <label className="block mb-1 text-sm font-medium text-gray-700">
-                Initial Quantity
-              </label>
-              <input
-                name="initial_quantity"
-                type="number"
-                min="0"
-                value={form.initial_quantity}
-                onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
-          )}
+          {/* Initial Quantity removed: stock starts at 0 and is managed via Purchases */}
 
           {/* Product Image */}
           <div>

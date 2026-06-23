@@ -47,9 +47,14 @@ exports.create = async (req, res, next) => {
     const shopId = resolveShopId(req)
     if (!assertShopAccess(req.appUser, shopId, res)) return
 
-    const { customer_id, total, items } = req.body
+    const { customer_id, total, items, total_profit } = req.body
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Sale items are required' })
+    }
+
+    // Optionally log frontend-calculated total_profit for auditing (DB RPC computes canonical profit)
+    if (total_profit !== undefined) {
+      console.log(`[sales.create] frontend total_profit=${total_profit} for shop=${shopId} by user=${req.appUser?.id}`)
     }
 
     // Prepare items payload format for PostgreSQL jsonb
