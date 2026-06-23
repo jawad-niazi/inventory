@@ -129,16 +129,16 @@ export default function SaleDetails() {
             {(sale.sale_items || []).map((item) => (
               <tr key={item.id}>
                 <td className="px-4 py-3 text-slate-900 font-medium">{item.products?.name || "Product Item"}</td>
-                <td className="px-4 py-3 text-right text-slate-600">${Number(item.unit_price).toFixed(2)}</td>
+                <td className="px-4 py-3 text-right text-slate-600">Rs. {Number(item.unit_price).toFixed(2)}</td>
                 <td className="px-4 py-3 text-right text-slate-600">{item.quantity}</td>
-                <td className="px-4 py-3 text-right text-slate-900 font-semibold">${Number(item.subtotal).toFixed(2)}</td>
+                <td className="px-4 py-3 text-right text-slate-900 font-semibold">Rs. {Number(item.subtotal).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr>
               <td colSpan={3} className="px-4 py-4 text-right font-bold text-slate-700 text-base">Grand Total</td>
-              <td className="px-4 py-4 text-right font-bold text-slate-900 text-lg">${Number(sale.total).toFixed(2)}</td>
+              <td className="px-4 py-4 text-right font-bold text-slate-900 text-lg">Rs. {Number(sale.total).toFixed(2)}</td>
             </tr>
           </tfoot>
         </table>

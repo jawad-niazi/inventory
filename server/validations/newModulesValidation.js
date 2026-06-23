@@ -19,11 +19,11 @@ const idParam = param('id').isUUID().withMessage('Invalid ID parameter')
 exports.listSuppliers = validate([shopIdQuery])
 exports.createSupplier = validate([
   shopIdBody,
-  body('name').trim().notEmpty().withMessage('Supplier name is required')
+  body('company_name').trim().notEmpty().withMessage('Company name is required')
 ])
 exports.updateSupplier = validate([
   idParam,
-  body('name').optional().trim().notEmpty().withMessage('Supplier name cannot be empty')
+  body('company_name').optional().trim().notEmpty().withMessage('Company name cannot be empty')
 ])
 
 exports.listPurchases = validate([shopIdQuery])
@@ -94,7 +94,6 @@ exports.listQuotations = validate([shopIdQuery])
 exports.getQuotation = validate([idParam])
 exports.createQuotation = validate([
   shopIdBody,
-  body('quote_number').trim().notEmpty().withMessage('Quote number is required'),
   body('items').isArray({ min: 1 }).withMessage('Items array is required')
 ])
 exports.updateQuotation = validate([

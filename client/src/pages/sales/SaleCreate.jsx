@@ -295,8 +295,8 @@ export default function SaleCreate() {
                         </div>
                       )}
                       <h4 className="font-semibold text-slate-900 line-clamp-1">{p.name}</h4>
-                      <p className="text-xs text-slate-500 mb-1">SKU: {p.sku || "—"}</p>
-                      <p className="text-lg font-bold text-slate-900">${Number(p.price).toFixed(2)}</p>
+                      <p className="text-xs text-slate-500 mb-1">Product Code: {p.sku || "—"}</p>
+                      <p className="text-lg font-bold text-slate-900">Rs. {Number(p.price).toFixed(2)}</p>
                     </div>
 
                     <div className="mt-4 flex items-center justify-between gap-2">
@@ -394,7 +394,7 @@ export default function SaleCreate() {
                     <div className="flex-1">
                       <p className="text-sm font-medium text-slate-900">{item.name}</p>
                       <p className="text-xs text-slate-500">
-                        ${item.unit_price.toFixed(2)} x {item.quantity}
+                        Rs. {item.unit_price.toFixed(2)} x {item.quantity}
                       </p>
                     </div>
 
@@ -435,7 +435,7 @@ export default function SaleCreate() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-700">Total</span>
                 <span className="text-xl font-bold text-slate-900">
-                  ${cartTotal.toFixed(2)}
+                  Rs. {cartTotal.toFixed(2)}
                 </span>
               </div>
               <button

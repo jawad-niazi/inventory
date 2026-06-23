@@ -18,6 +18,8 @@ export default function ShopForm() {
     phone: "",
     email: "",
     status: "active",
+    admin_email: "",
+    admin_password: "",
   });
   const [loading, setLoading] = useState(false);
   const [createdCredentials, setCreatedCredentials] = useState(null);
@@ -165,6 +167,39 @@ export default function ShopForm() {
               className={inputClass}
             />
           </div>
+          {!id && (
+            <>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  Shop Admin Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="admin_email"
+                  type="email"
+                  value={form.admin_email}
+                  onChange={handleChange}
+                  required
+                  placeholder="admin@example.com"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">
+                  Shop Admin Password <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="admin_password"
+                  type="password"
+                  value={form.admin_password}
+                  onChange={handleChange}
+                  required
+                  placeholder="Min 8 characters"
+                  minLength={8}
+                  className={inputClass}
+                />
+              </div>
+            </>
+          )}
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
               Status

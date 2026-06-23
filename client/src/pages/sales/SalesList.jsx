@@ -115,7 +115,7 @@ export default function SalesList() {
                         {s.app_users?.email || "—"}
                       </td>
                       <td className="px-4 py-3 text-sm font-bold text-slate-900">
-                        ${Number(s.total).toFixed(2)}
+                        Rs. {Number(s.total).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span

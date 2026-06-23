@@ -10,7 +10,7 @@ exports.list = async (req, res, next) => {
       .from('suppliers')
       .select('*')
       .eq('shop_id', shopId)
-      .order('name')
+      .order('company_name')
 
     if (error) return next(error)
     res.json({ suppliers: data })
@@ -24,12 +24,12 @@ exports.create = async (req, res, next) => {
     const shopId = resolveShopId(req)
     if (!assertShopAccess(req.appUser, shopId, res)) return
 
-    const { name, contact_name, phone, email, address } = req.body
-    if (!name) return res.status(400).json({ error: 'Name is required' })
+    const { company_name, phone, address } = req.body
+    if (!company_name) return res.status(400).json({ error: 'Company name is required' })
 
     const { data, error } = await supabase
       .from('suppliers')
-      .insert({ shop_id: shopId, name, contact_name, phone, email, address })
+      .insert({ shop_id: shopId, company_name, phone, address })
       .select()
       .single()
 
@@ -43,7 +43,7 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { id } = req.params
-    const { name, contact_name, phone, email, address } = req.body
+    const { company_name, phone, address } = req.body
 
     const { data: existing, error: fetchError } = await supabase
       .from('suppliers')
@@ -55,10 +55,8 @@ exports.update = async (req, res, next) => {
     if (!assertShopAccess(req.appUser, existing.shop_id, res)) return
 
     const payload = { updated_at: new Date().toISOString() }
-    if (name !== undefined) payload.name = name
-    if (contact_name !== undefined) payload.contact_name = contact_name
+    if (company_name !== undefined) payload.company_name = company_name
     if (phone !== undefined) payload.phone = phone
-    if (email !== undefined) payload.email = email
     if (address !== undefined) payload.address = address
 
     const { data, error } = await supabase

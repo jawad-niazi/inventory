@@ -18,11 +18,10 @@ export default function ProductForm() {
   const [form, setForm] = useState({
     name: "",
     sku: "",
-    description: "",
+    model_name: "",
     price: "0",
     category_id: "",
     low_stock_threshold: "0",
-    status: "active",
     initial_quantity: "0",
   });
 
@@ -47,11 +46,10 @@ export default function ProductForm() {
         setForm({
           name: p.name || "",
           sku: p.sku || "",
-          description: p.description || "",
+          model_name: p.model_name || "",
           price: String(p.price ?? 0),
           category_id: p.category_id || "",
           low_stock_threshold: String(p.low_stock_threshold ?? 0),
-          status: p.status || "active",
           initial_quantity: String(p.quantity ?? 0),
         });
         if (p.image_url) setPreview(p.image_url);
@@ -90,11 +88,11 @@ export default function ProductForm() {
       shop_id: shopId,
       name: form.name,
       sku: form.sku || null,
-      description: form.description || null,
+      model_name: form.model_name || null,
       price: parseFloat(form.price) || 0,
       category_id: form.category_id || null,
       low_stock_threshold: parseInt(form.low_stock_threshold, 10) || 0,
-      status: form.status,
+      // status defaults to 'active' on the backend — removed from form
     };
 
     if (!id) {
@@ -145,6 +143,7 @@ export default function ProductForm() {
           onSubmit={handleSubmit}
           className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
         >
+          {/* Name */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Name *
@@ -157,33 +156,41 @@ export default function ProductForm() {
               className={inputClass}
             />
           </div>
+
+          {/* Product Code (was SKU) */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              SKU
+              Product Code
             </label>
             <input
               name="sku"
               value={form.sku}
               onChange={handleChange}
+              placeholder="e.g. PC-001"
               className={inputClass}
             />
           </div>
+
+          {/* Model Name */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Description
+              Model Name
+              <span className="ml-1 text-xs text-gray-400">(e.g. Galaxy A35, iPhone 15)</span>
             </label>
-            <textarea
-              name="description"
-              value={form.description}
+            <input
+              name="model_name"
+              value={form.model_name}
               onChange={handleChange}
-              rows={3}
+              placeholder="e.g. Galaxy A35"
               className={inputClass}
             />
           </div>
+
+          {/* Price + Low stock */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                Price
+                Sale Price (Rs.)
               </label>
               <input
                 name="price"
@@ -197,7 +204,7 @@ export default function ProductForm() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                Low stock threshold
+                Low stock alert
               </label>
               <input
                 name="low_stock_threshold"
@@ -209,6 +216,8 @@ export default function ProductForm() {
               />
             </div>
           </div>
+
+          {/* Category */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Category
@@ -227,10 +236,12 @@ export default function ProductForm() {
               ))}
             </select>
           </div>
+
+          {/* Initial Quantity (create only) */}
           {!id && (
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
-                Initial quantity
+                Initial Quantity
               </label>
               <input
                 name="initial_quantity"
@@ -242,20 +253,8 @@ export default function ProductForm() {
               />
             </div>
           )}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Status
-            </label>
-            <select
-              name="status"
-              value={form.status}
-              onChange={handleChange}
-              className={inputClass}
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+
+          {/* Product Image */}
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Product image
@@ -274,6 +273,8 @@ export default function ProductForm() {
               />
             )}
           </div>
+
+          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
@@ -283,7 +284,7 @@ export default function ProductForm() {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/products")}
+              onClick={() => navigate(`/products?shop_id=${shopId}`)}
               className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
             >
               Cancel

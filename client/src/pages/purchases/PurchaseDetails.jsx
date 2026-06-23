@@ -74,19 +74,13 @@ export default function PurchaseDetails() {
             <div>
               <span className="text-slate-500 font-medium">Company Name:</span>{" "}
               <span className="text-slate-900 font-medium">
-                {purchase.suppliers?.name || "Direct Supplier"}
+                {purchase.suppliers?.company_name || "Direct Supplier"}
               </span>
             </div>
             {purchase.suppliers?.phone && (
               <div>
                 <span className="text-slate-500 font-medium">Phone:</span>{" "}
                 <span className="text-slate-900">{purchase.suppliers.phone}</span>
-              </div>
-            )}
-            {purchase.suppliers?.email && (
-              <div>
-                <span className="text-slate-500 font-medium">Email:</span>{" "}
-                <span className="text-slate-900">{purchase.suppliers.email}</span>
               </div>
             )}
             {purchase.suppliers?.address && (
@@ -114,16 +108,16 @@ export default function PurchaseDetails() {
             {(purchase.purchase_items || []).map((item) => (
               <tr key={item.id}>
                 <td className="px-4 py-3 text-slate-900 font-medium">{item.products?.name || "Product Item"}</td>
-                <td className="px-4 py-3 text-right text-slate-600">${Number(item.unit_cost).toFixed(2)}</td>
+                <td className="px-4 py-3 text-right text-slate-600">Rs. {Number(item.unit_cost).toFixed(2)}</td>
                 <td className="px-4 py-3 text-right text-slate-600">{item.quantity}</td>
-                <td className="px-4 py-3 text-right text-slate-900 font-semibold font-mono">${Number(item.subtotal).toFixed(2)}</td>
+                <td className="px-4 py-3 text-right text-slate-900 font-semibold font-mono">Rs. {Number(item.subtotal).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr>
               <td colSpan={3} className="px-4 py-4 text-right font-bold text-slate-700 text-base">Order Total</td>
-              <td className="px-4 py-4 text-right font-bold text-slate-900 text-lg font-mono">${Number(purchase.total_amount).toFixed(2)}</td>
+              <td className="px-4 py-4 text-right font-bold text-slate-900 text-lg font-mono">Rs. {Number(purchase.total_amount).toFixed(2)}</td>
             </tr>
           </tfoot>
         </table>

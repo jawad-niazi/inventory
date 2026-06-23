@@ -14,5 +14,6 @@ router.use('/suppliers', require('./suppliers'))
 router.use('/customers', require('./customers'))
 router.use('/returns', require('./returns'))
 router.use('/invoices', require('./invoices'))
+router.use('/quotations', require('./quotations'))
 
 module.exports = router

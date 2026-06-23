@@ -67,3 +67,54 @@ exports.me = async (req, res, next) => {
 exports.logout = async (req, res) => {
   res.json({ message: 'logout ok' })
 }
+
+// POST /api/auth/forgot-password (public — no auth middleware)
+// Triggers Supabase to send a password reset email with a redirect link.
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body
+    if (!email) return res.status(400).json({ error: 'Email is required' })
+
+    // Supabase handles token generation & email sending natively.
+    // The redirectTo URL is where Supabase embeds the reset token in the URL hash.
+    const siteUrl = process.env.SITE_URL || 'http://localhost:5173'
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${siteUrl}/reset-password`,
+    })
+
+    if (error) {
+      console.error('[forgotPassword] Supabase error:', error.message)
+      return res.status(400).json({ error: error.message })
+    }
+
+    // Always return 200 so we don't leak whether an email exists in the system
+    res.json({ message: 'If that email is registered, a password reset link has been sent.' })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// POST /api/auth/reset-password (requires a valid Supabase session from reset link)
+// Called after the user clicks the email link and is redirected to /reset-password,
+// at which point Supabase has established a session with the reset token.
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { password } = req.body
+    if (!password || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' })
+    }
+
+    // supabase.auth.updateUser uses the session of the currently authenticated user
+    // (the reset token session established via the email link)
+    const { error } = await supabase.auth.updateUser({ password })
+
+    if (error) {
+      console.error('[resetPassword] Supabase error:', error.message)
+      return res.status(400).json({ error: error.message })
+    }
+
+    res.json({ message: 'Password updated successfully' })
+  } catch (err) {
+    next(err)
+  }
+}

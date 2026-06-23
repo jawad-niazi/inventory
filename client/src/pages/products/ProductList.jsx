@@ -41,7 +41,8 @@ export default function ProductList() {
   const filtered = products.filter(
     (p) =>
       p.name.toLowerCase().includes(q.toLowerCase()) ||
-      (p.sku || "").toLowerCase().includes(q.toLowerCase()),
+      (p.sku || "").toLowerCase().includes(q.toLowerCase()) ||
+      (p.model_name || "").toLowerCase().includes(q.toLowerCase()),
   );
 
   return (
@@ -63,7 +64,7 @@ export default function ProductList() {
       {shopId && (
         <>
           <input
-            placeholder="Search by name or SKU"
+            placeholder="Search by name, Product Code or Model..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
             className="mb-4 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -80,7 +81,10 @@ export default function ProductList() {
                       Product
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                      SKU
+                      Product Code
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                      Model
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
                       Category
@@ -124,10 +128,13 @@ export default function ProductList() {
                           {p.sku || "—"}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
+                          {p.model_name || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
                           {p.categories?.name || "—"}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
-                          ${Number(p.price).toFixed(2)}
+                          Rs. {Number(p.price).toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <span
@@ -167,7 +174,7 @@ export default function ProductList() {
                   {filtered.length === 0 && (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="px-4 py-8 text-center text-sm text-gray-500"
                       >
                         No products found.

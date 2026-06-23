@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import App from "../App";
 import Login from "../pages/auth/Login";
+import ResetPassword from "../pages/auth/ResetPassword";
 import Dashboard from "../pages/dashboard/Dashboard";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import AdminProtectedRoute from "../components/common/AdminProtectedRoute";
@@ -12,6 +13,15 @@ import ProductList from "../pages/products/ProductList";
 import ProductForm from "../pages/products/ProductForm";
 import CategoriesList from "../pages/categories/CategoriesList";
 import InventoryList from "../pages/inventory/InventoryList";
+
+// Suppliers Pages
+import SuppliersList from "../pages/suppliers/SuppliersList";
+import SupplierForm from "../pages/suppliers/SupplierForm";
+
+// Quotations Pages
+import Quotations from "../pages/quotations/Quotations";
+import QuotationCreate from "../pages/quotations/QuotationCreate";
+import QuotationDetails from "../pages/quotations/QuotationDetails";
 
 // Sales Pages
 import SalesList from "../pages/sales/SalesList";
@@ -38,6 +48,7 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           element={
             <ProtectedRoute>
@@ -70,6 +81,16 @@ export default function AppRoutes() {
           {/* Invoices Routes */}
           <Route path="/invoices" element={<Invoices />} />
           <Route path="/invoices/:id" element={<InvoiceDetails />} />
+
+          {/* Suppliers Routes */}
+          <Route path="/suppliers" element={<SuppliersList />} />
+          <Route path="/suppliers/new" element={<SupplierForm />} />
+          <Route path="/suppliers/:id/edit" element={<SupplierForm />} />
+
+          {/* Quotations Routes */}
+          <Route path="/quotations" element={<Quotations />} />
+          <Route path="/quotations/new" element={<QuotationCreate />} />
+          <Route path="/quotations/:id" element={<QuotationDetails />} />
 
           <Route
             path="/shops"

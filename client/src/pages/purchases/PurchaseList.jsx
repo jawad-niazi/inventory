@@ -30,7 +30,7 @@ export default function PurchaseList() {
   }, [shopId, setSearchParams]);
 
   const filtered = purchases.filter((p) =>
-    (p.suppliers?.name || "Direct Supplier")
+    (p.suppliers?.company_name || "Direct Supplier")
       .toLowerCase()
       .includes(filterSupplier.toLowerCase())
   );
@@ -96,13 +96,13 @@ export default function PurchaseList() {
                         {new Date(p.created_at).toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                        {p.suppliers?.name || "Direct Supplier"}
+                        {p.suppliers?.company_name || "Direct Supplier"}
                       </td>
                       <td className="px-4 py-3 text-sm text-slate-600">
                         {p.app_users?.email || "—"}
                       </td>
                       <td className="px-4 py-3 text-sm font-bold text-slate-900">
-                        ${Number(p.total_amount).toFixed(2)}
+                        Rs. {Number(p.total_amount).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span
