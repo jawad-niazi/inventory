@@ -103,7 +103,8 @@ export default function ProductList() {
                 <tbody className="divide-y divide-gray-200">
                   {filtered.map((p) => {
                     const low =
-                      p.low_stock_threshold > 0 && p.quantity <= p.low_stock_threshold;
+                      p.low_stock_threshold > 0 &&
+                      p.quantity <= p.low_stock_threshold;
                     return (
                       <tr key={p.id}>
                         <td className="px-4 py-3">
@@ -125,7 +126,7 @@ export default function ProductList() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
-                          {p.sku || "—"}
+                          {p.product_code || p.sku || "—"}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {p.model_name || "—"}
@@ -139,9 +140,7 @@ export default function ProductList() {
                         <td className="px-4 py-3 text-sm">
                           <span
                             className={
-                              low
-                                ? "font-medium text-red-600"
-                                : "text-gray-900"
+                              low ? "font-medium text-red-600" : "text-gray-900"
                             }
                           >
                             {p.quantity}
@@ -153,7 +152,9 @@ export default function ProductList() {
                             <button
                               type="button"
                               onClick={() =>
-                                navigate(`/products/${p.id}/edit?shop_id=${shopId}`)
+                                navigate(
+                                  `/products/${p.id}/edit?shop_id=${shopId}`,
+                                )
                               }
                               className="text-sm text-indigo-600 hover:underline"
                             >

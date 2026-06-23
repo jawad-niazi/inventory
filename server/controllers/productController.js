@@ -15,7 +15,7 @@ exports.list = async (req, res, next) => {
       .eq('shop_id', shopId)
 
     if (q) {
-      query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%`)
+      query = query.or(`name.ilike.%${q}%,sku.ilike.%${q}%,product_code.ilike.%${q}%,model_name.ilike.%${q}%`)
     }
 
     const { data, error } = await query.order('created_at', { ascending: false })
@@ -24,7 +24,7 @@ exports.list = async (req, res, next) => {
 
     const products = (data || []).map((p) => ({
       ...p,
-      quantity: p.inventory?.[0]?.quantity ?? 0,
+      quantity: p.current_stock ?? p.inventory?.[0]?.quantity ?? 0,
       inventory: undefined,
     }))
 
@@ -50,7 +50,7 @@ exports.getOne = async (req, res, next) => {
     res.json({
       product: {
         ...data,
-        quantity: data.inventory?.[0]?.quantity ?? 0,
+        quantity: data.current_stock ?? data.inventory?.[0]?.quantity ?? 0,
         inventory: undefined,
       },
     })
@@ -89,6 +89,52 @@ exports.serveImage = async (req, res, next) => {
   }
 }
 
+// GET /api/products/:id/cost
+// Returns latest purchase cost for the product (purchase_price or unit_cost), or fallback to product.price
+exports.getCost = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const { data: latest, error: latestErr } = await supabase
+      .from('purchase_items')
+      .select('purchase_price, unit_cost, created_at')
+      .eq('product_id', id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (latestErr) return next(latestErr)
+
+    if (latest && latest.length > 0) {
+      const row = latest[0]
+      const cost = row.purchase_price ?? row.unit_cost ?? null
+      return res.json({ product_id: id, latest_cost: cost })
+    }
+
+    // fallback to product.price
+    const { data: product, error: prodErr } = await supabase
+      .from('products')
+      .select('price')
+      .eq('id', id)
+      .single()
+    if (prodErr) return next(prodErr)
+    return res.json({ product_id: id, latest_cost: product?.price ?? 0 })
+  } catch (err) {
+    next(err)
+  }
+}
+
+const cloudinary = require('../config/cloudinary')
+const streamifier = require('streamifier')
+
+function uploadToCloudinary(buffer, options = {}) {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error)
+      resolve(result)
+    })
+    streamifier.createReadStream(buffer).pipe(uploadStream)
+  })
+}
+
 exports.create = async (req, res, next) => {
   try {
     const shopId = resolveShopId(req)
@@ -97,6 +143,8 @@ exports.create = async (req, res, next) => {
     const {
       name,
       sku,
+      product_code,
+      model_name,
       description,
       price,
       category_id,
@@ -105,12 +153,29 @@ exports.create = async (req, res, next) => {
       initial_quantity,
     } = req.body
 
+    // Prevent duplicate products for same shop by name + model_name
+    if (name && model_name) {
+      const { data: existing, error: dupErr } = await supabase
+        .from('products')
+        .select('id')
+        .eq('shop_id', shopId)
+        .eq('name', name)
+        .eq('model_name', model_name)
+        .maybeSingle()
+      if (dupErr) return next(dupErr)
+      if (existing) {
+        return res.status(400).json({ error: 'Product with this name and model already exists.' })
+      }
+    }
+
     const { data: product, error } = await supabase
       .from('products')
       .insert({
         shop_id: shopId,
         name,
         sku: sku || null,
+        product_code: product_code || sku || null,
+        model_name: model_name || null,
         description: description || null,
         price: price ?? 0,
         category_id: category_id || null,
@@ -129,6 +194,9 @@ exports.create = async (req, res, next) => {
       quantity: qty,
     })
 
+    // set denormalized current_stock on product
+    await supabase.from('products').update({ current_stock: qty }).eq('id', product.id)
+
     if (invError) return next(invError)
 
     if (qty !== 0) {
@@ -139,6 +207,32 @@ exports.create = async (req, res, next) => {
         reason: 'Initial stock',
         adjusted_by: req.appUser.id,
       })
+    }
+
+    // If an image file was uploaded, push to Cloudinary and update the product
+    if (req.file && req.file.buffer) {
+      try {
+        const uploadResult = await uploadToCloudinary(req.file.buffer, {
+          folder: `products/${shopId}`,
+          public_id: `${product.id}`,
+          overwrite: true,
+          resource_type: 'image',
+        })
+
+        const image_url = uploadResult.secure_url
+        if (image_url) {
+          const { data: updated, error: updErr } = await supabase
+            .from('products')
+            .update({ image_url, updated_at: new Date().toISOString() })
+            .eq('id', product.id)
+            .select('*, categories(id, name)')
+            .single()
+          if (updErr) return next(updErr)
+          return res.status(201).json({ product: { ...updated, quantity: qty } })
+        }
+      } catch (uploadErr) {
+        return next(uploadErr)
+      }
     }
 
     res.status(201).json({ product: { ...product, quantity: qty } })
@@ -153,7 +247,7 @@ exports.update = async (req, res, next) => {
 
     const { data: existing, error: fetchError } = await supabase
       .from('products')
-      .select('shop_id')
+      .select('shop_id, image_url')
       .eq('id', id)
       .single()
 
@@ -164,6 +258,7 @@ exports.update = async (req, res, next) => {
     const fields = [
       'name',
       'sku',
+      'product_code',
       'description',
       'price',
       'category_id',
@@ -174,6 +269,21 @@ exports.update = async (req, res, next) => {
     fields.forEach((f) => {
       if (req.body[f] !== undefined) payload[f] = req.body[f]
     })
+
+    // If a file was uploaded, send it to Cloudinary and set image_url in payload
+    if (req.file && req.file.buffer) {
+      try {
+        const uploadResult = await uploadToCloudinary(req.file.buffer, {
+          folder: `products/${existing.shop_id}`,
+          public_id: `${id}`,
+          overwrite: true,
+          resource_type: 'image',
+        })
+        if (uploadResult && uploadResult.secure_url) payload.image_url = uploadResult.secure_url
+      } catch (uploadErr) {
+        return next(uploadErr)
+      }
+    }
 
     const { data, error } = await supabase
       .from('products')
@@ -208,7 +318,15 @@ exports.remove = async (req, res, next) => {
     }
 
     const { error } = await supabase.from('products').delete().eq('id', id)
-    if (error) return next(error)
+    if (error) {
+      console.error('[productController.remove] delete error code=%s message=%s', error.code, error.message || error.details || JSON.stringify(error))
+      // Postgres foreign key violation code is 23503
+      if (error.code === '23503' || (error.details && String(error.details).toLowerCase().includes('foreign key'))) {
+        return res.status(400).json({ error: 'Cannot delete this product because it is linked to existing transactions or history. Remove related records first.' })
+      }
+      return next(error)
+    }
+
     res.json({ deleted: true })
   } catch (err) {
     next(err)

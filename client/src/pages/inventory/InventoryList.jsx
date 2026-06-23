@@ -173,7 +173,10 @@ export default function InventoryList() {
                     <select
                       value={adjustForm.product_id}
                       onChange={(e) =>
-                        setAdjustForm({ ...adjustForm, product_id: e.target.value })
+                        setAdjustForm({
+                          ...adjustForm,
+                          product_id: e.target.value,
+                        })
                       }
                       required
                       className={`${inputClass} w-full`}
@@ -229,7 +232,9 @@ export default function InventoryList() {
               {tab === "alerts" && (
                 <div className="space-y-3">
                   {alerts.length === 0 ? (
-                    <p className="text-sm text-gray-500">No low stock alerts.</p>
+                    <p className="text-sm text-gray-500">
+                      No low stock alerts.
+                    </p>
                   ) : (
                     alerts.map((row) => (
                       <div
@@ -266,6 +271,9 @@ export default function InventoryList() {
                           Product
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                          Supplier
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
                           Change
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
@@ -284,6 +292,9 @@ export default function InventoryList() {
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-900">
                             {h.products?.name || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {h.purchase_supplier_company || "—"}
                           </td>
                           <td
                             className={`px-4 py-3 text-sm font-medium ${h.quantity_change >= 0 ? "text-green-600" : "text-red-600"}`}

@@ -29,7 +29,7 @@ exports.getOne = async (req, res, next) => {
 
     const { data: sale, error } = await supabase
       .from('sales')
-      .select('*, customers(*), sale_items(*, products(name, sku))')
+      .select('*, customers(*), sale_items(*, products(name, sku, model_name, product_code))')
       .eq('id', id)
       .single()
 
@@ -64,7 +64,7 @@ exports.create = async (req, res, next) => {
     }))
 
     // Call PostgreSQL RPC function to do atomic stock checking and deduction
-    const { data: saleId, error: rpcError } = await supabase.rpc('create_sale_transaction', {
+    const { data: rpcData, error: rpcError } = await supabase.rpc('create_sale_transaction', {
       p_shop_id: shopId,
       p_customer_id: customer_id || null,
       p_created_by: req.appUser.id,
@@ -74,7 +74,6 @@ exports.create = async (req, res, next) => {
 
     if (rpcError) {
       console.error('RPC Error:', rpcError)
-      // Check if it's our custom PL/pgSQL assertion error
       if (rpcError.message && rpcError.message.includes('insufficient_stock:')) {
         const parts = rpcError.message.split('insufficient_stock:')
         const productName = parts[1] || 'one of the items'
@@ -82,6 +81,29 @@ exports.create = async (req, res, next) => {
       }
       return res.status(400).json({ error: rpcError.message })
     }
+
+    // Normalize RPC return value to a single uuid string
+    let saleId = null
+    const raw = rpcData
+    if (!raw) {
+      return res.status(500).json({ error: 'Sale RPC returned no data' })
+    }
+    if (typeof raw === 'string') {
+      saleId = raw
+    } else if (Array.isArray(raw)) {
+      const first = raw[0]
+      if (!first) saleId = null
+      else if (typeof first === 'string') saleId = first
+      else if (first.id) saleId = first.id
+      else if (first.create_sale_transaction) saleId = first.create_sale_transaction
+      else saleId = Object.values(first)[0]
+    } else if (typeof raw === 'object') {
+      saleId = raw.id || raw.create_sale_transaction || Object.values(raw)[0]
+    } else {
+      saleId = String(raw)
+    }
+
+    if (!saleId) return res.status(500).json({ error: 'Failed to determine created sale id' })
 
     res.status(201).json({ sale_id: saleId, message: 'Sale created successfully' })
   } catch (err) {

@@ -32,13 +32,15 @@ export default function PurchaseList() {
   const filtered = purchases.filter((p) =>
     (p.suppliers?.company_name || "Direct Supplier")
       .toLowerCase()
-      .includes(filterSupplier.toLowerCase())
+      .includes(filterSupplier.toLowerCase()),
   );
 
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-900">Procurement (Purchases)</h2>
+        <h2 className="text-2xl font-bold text-slate-900">
+          Procurement (Purchases)
+        </h2>
         {shopId && (
           <Link
             to={`/purchases/new?shop_id=${shopId}`}
@@ -105,15 +107,64 @@ export default function PurchaseList() {
                         Rs. {Number(p.total_amount).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            p.status === "received"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-amber-100 text-amber-800"
-                          }`}
-                        >
-                          {p.status || "received"}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              p.status === "received"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {p.status || "received"}
+                          </span>
+                          {p.status !== "received" && (
+                            <button
+                              onClick={async () => {
+                                if (!confirm("Mark this purchase as received?"))
+                                  return;
+                                try {
+                                  const res = await apiFetch(
+                                    `/api/purchases/${p.id}/status`,
+                                    {
+                                      method: "PUT",
+                                      body: JSON.stringify({
+                                        status: "received",
+                                        shop_id: shopId,
+                                      }),
+                                    },
+                                  );
+                                  if (res.ok) {
+                                    // update local state
+                                    setPurchases((cur) =>
+                                      cur.map((x) =>
+                                        x.id === p.id
+                                          ? { ...x, status: "received" }
+                                          : x,
+                                      ),
+                                    );
+                                  } else {
+                                    const body = await res
+                                      .json()
+                                      .catch(() => ({}));
+                                    alert(
+                                      body.error ||
+                                        "Failed to update purchase status",
+                                    );
+                                  }
+                                } catch (err) {
+                                  console.error("Failed to mark received", err);
+                                  alert(
+                                    "Failed to update status. Check console.",
+                                  );
+                                }
+                              }}
+                              className="text-emerald-600 hover:text-emerald-700 text-xs font-semibold"
+                              title="Mark as Received"
+                            >
+                              ✓
+                            </button>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <Link

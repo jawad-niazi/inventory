@@ -54,10 +54,7 @@ export default function PurchaseCreate() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Inline Supplier State
-  const [showAddSupplier, setShowAddSupplier] = useState(false);
-  const [newSupplierCompanyName, setNewSupplierCompanyName] = useState("");
-  const [newSupplierPhone, setNewSupplierPhone] = useState("");
+  // Inline Supplier State removed: use supplier management page instead
 
   const loadData = async () => {
     if (!shopId) return;
@@ -108,7 +105,7 @@ export default function PurchaseCreate() {
           product_id: prod.id,
           name: prod.name,
           quantity: 1,
-          unit_cost: Number(prod.price) * 0.7, // Initial default estimated cost (70% of retail price)
+          purchase_price: Number(prod.price) * 0.7, // Initial default estimated cost (70% of retail price)
         },
       ]);
     }
@@ -126,32 +123,7 @@ export default function PurchaseCreate() {
     setItems(items.filter((_, idx) => idx !== index));
   };
 
-  const handleAddSupplierSubmit = async (e) => {
-    e.preventDefault();
-    if (!newSupplierCompanyName.trim()) return;
-
-    const res = await apiFetch("/api/suppliers", {
-      method: "POST",
-      body: JSON.stringify({
-        shop_id: shopId,
-        company_name: newSupplierCompanyName,
-        phone: newSupplierPhone,
-      }),
-    });
-
-    if (res.ok) {
-      const body = await res.json();
-      const created = body.supplier;
-      setSuppliers([...suppliers, created]);
-      setSelectedSupplierId(created.id);
-      setNewSupplierCompanyName("");
-      setNewSupplierPhone("");
-      setShowAddSupplier(false);
-    } else {
-      const body = await res.json();
-      alert(body.error || "Failed to create supplier");
-    }
-  };
+  // Supplier creation removed from this page. Use Suppliers management screen.
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -162,7 +134,8 @@ export default function PurchaseCreate() {
     setSubmitting(true);
 
     const total_amount = items.reduce(
-      (sum, i) => sum + i.quantity * Number(i.unit_cost),
+      (sum, i) =>
+        sum + i.quantity * Number(i.purchase_price ?? i.unit_cost ?? 0),
       0,
     );
 
@@ -188,7 +161,7 @@ export default function PurchaseCreate() {
   };
 
   const totalCost = items.reduce(
-    (sum, i) => sum + i.quantity * Number(i.unit_cost),
+    (sum, i) => sum + i.quantity * Number(i.purchase_price ?? i.unit_cost ?? 0),
     0,
   );
 
@@ -218,45 +191,10 @@ export default function PurchaseCreate() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Supplier Select */}
             <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
+              <div>
                 <label className="text-sm font-semibold text-slate-700">
                   Supplier Vendor
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setShowAddSupplier(!showAddSupplier)}
-                  className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
-                >
-                  {showAddSupplier
-                    ? "Select Existing"
-                    : "+ Register New Supplier"}
-                </button>
-              </div>
-
-              {showAddSupplier ? (
-                <div className="space-y-2 border border-slate-200 rounded p-3 bg-slate-50">
-                  <input
-                    placeholder="Company Name"
-                    value={newSupplierCompanyName}
-                    onChange={(e) => setNewSupplierCompanyName(e.target.value)}
-                    required
-                    className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs focus:outline-none focus:border-emerald-500"
-                  />
-                  <input
-                    placeholder="Phone"
-                    value={newSupplierPhone}
-                    onChange={(e) => setNewSupplierPhone(e.target.value)}
-                    className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs focus:outline-none focus:border-emerald-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddSupplierSubmit}
-                    className="w-full rounded bg-emerald-600 py-1 text-xs font-medium text-white hover:bg-emerald-700"
-                  >
-                    Save Supplier
-                  </button>
-                </div>
-              ) : (
                 <select
                   value={selectedSupplierId}
                   onChange={(e) => setSelectedSupplierId(e.target.value)}
@@ -269,7 +207,10 @@ export default function PurchaseCreate() {
                     </option>
                   ))}
                 </select>
-              )}
+                <p className="mt-2 text-xs text-gray-500">
+                  Manage suppliers in the Suppliers page.
+                </p>
+              </div>
             </div>
 
             {/* Status Select */}
@@ -309,7 +250,9 @@ export default function PurchaseCreate() {
                 <option value="">-- Choose Product to Restock --</option>
                 {(products || []).map((p) => (
                   <option key={p?.id} value={p?.id}>
-                    {p?.name || "Product"} (current stock: {p?.quantity ?? 0})
+                    {p?.model_name ? `${p.model_name} · ` : ""}
+                    {p?.product_code || p?.sku || ""}
+                    {` — ${p?.name || "Product"} (stock: ${p?.quantity ?? 0})`}
                   </option>
                 ))}
               </select>
@@ -344,11 +287,11 @@ export default function PurchaseCreate() {
                         type="number"
                         step="0.01"
                         min="0.01"
-                        value={item.unit_cost}
+                        value={item.purchase_price ?? item.unit_cost}
                         onChange={(e) =>
                           updateItem(
                             idx,
-                            "unit_cost",
+                            "purchase_price",
                             parseFloat(e.target.value) || 0,
                           )
                         }
@@ -373,7 +316,10 @@ export default function PurchaseCreate() {
                       />
                     </td>
                     <td className="px-4 py-2 text-right text-slate-900 font-bold font-mono">
-                      Rs. {(item.quantity * item.unit_cost).toFixed(2)}
+                      Rs.{" "}
+                      {(
+                        item.quantity * (item.purchase_price ?? item.unit_cost)
+                      ).toFixed(2)}
                     </td>
                     <td className="px-4 py-2 text-center">
                       <button

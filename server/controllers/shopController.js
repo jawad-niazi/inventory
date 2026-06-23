@@ -185,7 +185,13 @@ exports.remove = async (req, res, next) => {
 
     // 10. Finally, delete the shop itself
     const { error } = await supabase.from('shops').delete().eq('id', id)
-    if (error) return next(error)
+    if (error) {
+      console.error('[shopController.remove] delete error code=%s message=%s', error.code, error.message || error.details || JSON.stringify(error))
+      if (error.code === '23503' || (error.details && String(error.details).toLowerCase().includes('foreign key'))) {
+        return res.status(400).json({ error: 'Cannot delete this shop because related records exist. Clean up linked data first (invoices, sales, inventory).' })
+      }
+      return next(error)
+    }
 
     res.json({ deleted: true })
   } catch (err) {

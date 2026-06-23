@@ -121,6 +121,15 @@ export default function QuotationDetails() {
             Back to List
           </button>
 
+          {/* Print / Download PDF button - visible on screen, hidden in print */}
+          <button
+            onClick={() => window.print()}
+            className="no-print rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            title="Print or save quotation as PDF"
+          >
+            Print Quotation
+          </button>
+
           {["draft", "sent"].includes(quotation.status) && (
             <button
               onClick={handleConvertToSale}
@@ -247,6 +256,123 @@ export default function QuotationDetails() {
           </p>
         </div>
       )}
+
+      {/* Printable template - hidden on screen, visible only for print */}
+      <div id="quotation-print-area" className="print-only hidden">
+        <style>{`
+          @page { size: A4; margin: 18mm }
+          @media print {
+            body * { visibility: hidden }
+            #quotation-print-area, #quotation-print-area * { visibility: visible }
+            #quotation-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 10mm; box-sizing: border-box; }
+            .q-header { text-align: center; margin-bottom: 6mm }
+            .q-meta { margin-bottom: 6mm }
+            .q-items { width: 100%; border-collapse: collapse; margin-bottom: 6mm }
+            .q-items th, .q-items td { border: 1px solid #ddd; padding: 6px; font-size: 12pt }
+            .q-items th { background: #f7f7f7; font-weight: 700 }
+            .q-footer { text-align: right; font-weight: 700; font-size: 14pt; margin-top: 6mm }
+            .no-print { display: none !important }
+            .print-only { display: block !important }
+          }
+        `}</style>
+
+        <div
+          style={{ fontFamily: "Arial, Helvetica, sans-serif", color: "#111" }}
+        >
+          <div className="q-header">
+            <h1 style={{ fontSize: "18pt", margin: 0, letterSpacing: "1px" }}>
+              QUOTATION / PRICE ESTIMATE
+            </h1>
+          </div>
+
+          <div
+            className="q-meta"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "6mm",
+            }}
+          >
+            <div>
+              <div style={{ fontSize: "10pt", color: "#444" }}>
+                Quotation Number
+              </div>
+              <div style={{ fontSize: "12pt", fontWeight: 700 }}>
+                {quotation.quote_number}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: "10pt", color: "#444" }}>Date</div>
+              <div style={{ fontSize: "12pt" }}>
+                {new Date(quotation.created_at).toLocaleDateString()}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: "10pt", color: "#444" }}>Valid Until</div>
+              <div style={{ fontSize: "12pt" }}>
+                {quotation.valid_until
+                  ? new Date(quotation.valid_until).toLocaleDateString()
+                  : "—"}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "6mm" }}>
+            <div style={{ fontSize: "10pt", color: "#444" }}>Customer</div>
+            <div style={{ fontSize: "12pt", fontWeight: 700 }}>
+              {quotation.customer_name || "Walk-in Customer"}
+            </div>
+            {quotation.shop_name && (
+              <div
+                style={{ marginTop: "3mm", fontSize: "10pt", color: "#444" }}
+              >
+                Shop
+              </div>
+            )}
+            {quotation.shop_name && (
+              <div style={{ fontSize: "12pt" }}>{quotation.shop_name}</div>
+            )}
+          </div>
+
+          <table className="q-items" style={{ width: "100%" }}>
+            <thead>
+              <tr>
+                <th style={{ width: "6%" }}>#</th>
+                <th style={{ width: "46%" }}>Product Name</th>
+                <th style={{ width: "18%" }}>Model</th>
+                <th style={{ width: "10%", textAlign: "right" }}>Qty</th>
+                <th style={{ width: "10%", textAlign: "right" }}>Unit Price</th>
+                <th style={{ width: "10%", textAlign: "right" }}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(quotation.quotation_items || []).map((it, idx) => (
+                <tr key={it.id || idx}>
+                  <td>{idx + 1}</td>
+                  <td>{it.description || it.products?.name || "—"}</td>
+                  <td>{it.products?.model_name || "—"}</td>
+                  <td style={{ textAlign: "right" }}>{it.quantity}</td>
+                  <td style={{ textAlign: "right" }}>
+                    Rs. {Number(it.unit_price).toFixed(2)}
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    Rs. {Number(it.subtotal).toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="q-footer">
+            Grand Total: Rs. {Number(quotation.total || 0).toFixed(2)}
+          </div>
+
+          <div style={{ marginTop: "8mm", fontSize: "9pt", color: "#444" }}>
+            This is a price quotation and does not represent a commercial sale
+            or stock deduction. Rates are subject to market stability.
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

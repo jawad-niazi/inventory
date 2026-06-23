@@ -135,7 +135,39 @@ exports.history = async (req, res, next) => {
 
     const { data, error } = await query
     if (error) return next(error)
-    res.json({ history: data })
+    // Attach supplier company_name for adjustments created by purchases
+    const purchaseIds = []
+    data.forEach((h) => {
+      if (h.reason && typeof h.reason === 'string') {
+        const m = h.reason.match(/Purchase order: ([0-9a-fA-F-]{36})/)
+        if (m) purchaseIds.push(m[1])
+      }
+    })
+
+    let supplierMap = {}
+    if (purchaseIds.length > 0) {
+      const { data: purchases, error: pErr } = await supabase
+        .from('purchases')
+        .select('id, supplier_id, suppliers(company_name)')
+        .in('id', purchaseIds)
+      if (!pErr && purchases) {
+        purchases.forEach((p) => {
+          supplierMap[p.id] = p.suppliers?.company_name || null
+        })
+      }
+    }
+
+    const enriched = (data || []).map((h) => {
+      if (h.reason && typeof h.reason === 'string') {
+        const m = h.reason.match(/Purchase order: ([0-9a-fA-F-]{36})/)
+        if (m) {
+          h.purchase_supplier_company = supplierMap[m[1]] || null
+        }
+      }
+      return h
+    })
+
+    res.json({ history: enriched })
   } catch (err) {
     next(err)
   }

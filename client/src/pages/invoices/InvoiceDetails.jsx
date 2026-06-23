@@ -67,13 +67,18 @@ export default function InvoiceDetails() {
     }
   };
 
-  if (loading) return <div className="p-6 text-slate-655">Loading details...</div>;
-  if (error && !invoice) return <div className="p-6 text-red-655 font-semibold">{error}</div>;
-  if (!invoice) return <div className="p-6 text-red-655">Invoice not found.</div>;
+  if (loading)
+    return <div className="p-6 text-slate-655">Loading details...</div>;
+  if (error && !invoice)
+    return <div className="p-6 text-red-655 font-semibold">{error}</div>;
+  if (!invoice)
+    return <div className="p-6 text-red-655">Invoice not found.</div>;
 
   const sale = invoice.sales;
   const items = sale?.sale_items || invoice.invoice_items || [];
-  const total = sale ? sale.total : items.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
+  const total = sale
+    ? sale.total
+    : items.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -99,8 +104,12 @@ export default function InvoiceDetails() {
         {/* Invoice Header */}
         <div className="flex justify-between items-start gap-4">
           <div>
-            <h3 className="text-xl font-bold text-slate-900">Invoice Statement</h3>
-            <p className="text-sm font-mono text-emerald-600 font-bold">{invoice.invoice_number}</p>
+            <h3 className="text-xl font-bold text-slate-900">
+              Invoice Statement
+            </h3>
+            <p className="text-sm font-mono text-emerald-600 font-bold">
+              {invoice.invoice_number}
+            </p>
           </div>
           <div className="text-right">
             <span
@@ -108,8 +117,8 @@ export default function InvoiceDetails() {
                 invoice.status === "paid"
                   ? "bg-emerald-100 text-emerald-800"
                   : invoice.status === "cancelled"
-                  ? "bg-red-100 text-red-800"
-                  : "bg-amber-100 text-amber-800"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-amber-100 text-amber-800"
               }`}
             >
               {invoice.status}
@@ -120,15 +129,29 @@ export default function InvoiceDetails() {
         {/* Invoice Meta */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm border-t border-b border-slate-100 py-6">
           <div>
-            <p className="font-semibold text-slate-700 uppercase tracking-wide text-xs mb-2">Billed To</p>
-            <p className="font-semibold text-slate-900">{sale?.customers?.name || "Walk-in Customer"}</p>
-            {sale?.customers?.phone && <p className="text-slate-600">Phone: {sale.customers.phone}</p>}
-            {sale?.customers?.email && <p className="text-slate-600">Email: {sale.customers.email}</p>}
+            <p className="font-semibold text-slate-700 uppercase tracking-wide text-xs mb-2">
+              Billed To
+            </p>
+            <p className="font-semibold text-slate-900">
+              {sale?.customers?.name || "Walk-in Customer"}
+            </p>
+            {sale?.customers?.phone && (
+              <p className="text-slate-600">Phone: {sale.customers.phone}</p>
+            )}
+            {sale?.customers?.email && (
+              <p className="text-slate-600">Email: {sale.customers.email}</p>
+            )}
           </div>
           <div className="sm:text-right">
-            <p className="font-semibold text-slate-700 uppercase tracking-wide text-xs mb-2">Payment Details</p>
-            <p className="text-slate-600">Date Issued: {new Date(invoice.created_at).toLocaleDateString()}</p>
-            <p className="text-slate-600 font-semibold mt-1">Total Amount: ${Number(total).toFixed(2)}</p>
+            <p className="font-semibold text-slate-700 uppercase tracking-wide text-xs mb-2">
+              Payment Details
+            </p>
+            <p className="text-slate-600">
+              Date Issued: {new Date(invoice.created_at).toLocaleDateString()}
+            </p>
+            <p className="text-slate-600 font-semibold mt-1">
+              Total Amount: Rs. {Number(total).toFixed(2)}
+            </p>
           </div>
         </div>
 
@@ -137,26 +160,49 @@ export default function InvoiceDetails() {
           <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead className="bg-slate-50">
               <tr>
-                <th className="px-4 py-2 text-left font-semibold text-slate-700">Product / Item</th>
-                <th className="px-4 py-2 text-right font-semibold text-slate-700 w-28">Price</th>
-                <th className="px-4 py-2 text-right font-semibold text-slate-700 w-20">Qty</th>
-                <th className="px-4 py-2 text-right font-semibold text-slate-700 w-28">Subtotal</th>
+                <th className="px-4 py-2 text-left font-semibold text-slate-700">
+                  Product / Item
+                </th>
+                <th className="px-4 py-2 text-right font-semibold text-slate-700 w-28">
+                  Price
+                </th>
+                <th className="px-4 py-2 text-right font-semibold text-slate-700 w-20">
+                  Qty
+                </th>
+                <th className="px-4 py-2 text-right font-semibold text-slate-700 w-28">
+                  Subtotal
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.map((item) => (
                 <tr key={item.id}>
-                  <td className="px-4 py-3 text-slate-900 font-medium">{item.products?.name || item.description || "Product Item"}</td>
-                  <td className="px-4 py-3 text-right text-slate-600">${Number(item.unit_price).toFixed(2)}</td>
-                  <td className="px-4 py-3 text-right text-slate-600">{item.quantity}</td>
-                  <td className="px-4 py-3 text-right text-slate-900 font-semibold font-mono">${Number(item.subtotal).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-slate-900 font-medium">
+                    {item.products?.name || item.description || "Product Item"}
+                  </td>
+                  <td className="px-4 py-3 text-right text-slate-600">
+                    Rs. {Number(item.unit_price).toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-slate-600">
+                    {item.quantity}
+                  </td>
+                  <td className="px-4 py-3 text-right text-slate-900 font-semibold font-mono">
+                    Rs. {Number(item.subtotal).toFixed(2)}
+                  </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={3} className="px-4 py-4 text-right font-bold text-slate-700 text-base">Grand Total</td>
-                <td className="px-4 py-4 text-right font-bold text-slate-900 text-lg font-mono">${Number(total).toFixed(2)}</td>
+                <td
+                  colSpan={3}
+                  className="px-4 py-4 text-right font-bold text-slate-700 text-base"
+                >
+                  Grand Total
+                </td>
+                <td className="px-4 py-4 text-right font-bold text-slate-900 text-lg font-mono">
+                  Rs. {Number(total).toFixed(2)}
+                </td>
               </tr>
             </tfoot>
           </table>
@@ -165,7 +211,9 @@ export default function InvoiceDetails() {
 
       {/* Invoice Actions */}
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <h3 className="font-semibold text-slate-900">Update Invoice Billing Status</h3>
+        <h3 className="font-semibold text-slate-900">
+          Update Invoice Billing Status
+        </h3>
         <div className="flex flex-wrap gap-2">
           {["draft", "sent", "paid", "cancelled"].map((st) => (
             <button

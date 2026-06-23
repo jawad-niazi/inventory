@@ -8,5 +8,6 @@ router.use(loadProfile)
 router.get('/', listPurchases, ctrl.list)
 router.get('/:id', getPurchase, ctrl.getOne)
 router.post('/', createPurchase, ctrl.create)
+router.put('/:id/status', ctrl.updateStatus)
 
 module.exports = router

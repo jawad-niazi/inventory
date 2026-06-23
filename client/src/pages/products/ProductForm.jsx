@@ -17,7 +17,7 @@ export default function ProductForm() {
   const [preview, setPreview] = useState(null);
   const [form, setForm] = useState({
     name: "",
-    sku: "",
+    product_code: "",
     model_name: "",
     price: "0",
     category_id: "",
@@ -45,7 +45,7 @@ export default function ProductForm() {
         const p = body.product;
         setForm({
           name: p.name || "",
-          sku: p.sku || "",
+          product_code: p.product_code || p.sku || "",
           model_name: p.model_name || "",
           price: String(p.price ?? 0),
           category_id: p.category_id || "",
@@ -72,12 +72,39 @@ export default function ProductForm() {
   const uploadImage = async (productId) => {
     if (!imageFile) return;
     const fd = new FormData();
-    fd.append("image", imageFile);
-    await apiFetch(`/api/products/${productId}/image`, {
-      method: "POST",
-      body: fd,
-      isFormData: true,
-    });
+    fd.append("image", imageFile); // Key name matching backend upload.single('image')
+
+    try {
+      // apiFetch ko bypass karke direct browser fetch use karein taake headers block na hon
+      console.log("[ProductForm] uploading image for productId=", productId);
+      const response = await fetch(`/api/products/${productId}/image`, {
+        method: "POST",
+        body: fd,
+      });
+
+      console.log(
+        "[ProductForm] image upload response status=",
+        response.status,
+      );
+      if (!response.ok) {
+        const txt = await response.text().catch(() => null);
+        console.error(
+          "[ProductForm] Image upload failed status:",
+          response.status,
+          txt,
+        );
+        // throw so caller knows upload failed
+        throw new Error(`Image upload failed: ${response.status}`);
+      }
+
+      console.log(
+        "[ProductForm] Image uploaded successfully to backend/cloudinary",
+      );
+      return true;
+    } catch (err) {
+      console.error("Error uploading image:", err);
+      throw err;
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -87,7 +114,8 @@ export default function ProductForm() {
     const payload = {
       shop_id: shopId,
       name: form.name,
-      sku: form.sku || null,
+      product_code: form.product_code || form.sku || null,
+      sku: form.product_code || form.sku || null,
       model_name: form.model_name || null,
       price: parseFloat(form.price) || 0,
       category_id: form.category_id || null,
@@ -101,16 +129,64 @@ export default function ProductForm() {
 
     const method = id ? "PUT" : "POST";
     const url = id ? `/api/products/${id}` : "/api/products";
-    const res = await apiFetch(url, {
-      method,
-      body: JSON.stringify(payload),
-    });
+    try {
+      console.log(
+        "[ProductForm] Sending product payload to",
+        url,
+        "method=",
+        method,
+        "payload=",
+        payload,
+      );
+      const res = await apiFetch(url, {
+        method,
+        body: JSON.stringify(payload),
+      });
 
-    if (res.ok) {
-      const body = await res.json();
+      console.log("[ProductForm] Product save response status=", res.status);
+      const body = await (res.ok ? res.json() : res.json().catch(() => ({})));
+
+      if (!res.ok) {
+        console.error(
+          "[ProductForm] Failed to save product:",
+          body.error || body || res.status,
+        );
+        alert("Failed to save product: " + (body.error || res.status));
+        return;
+      }
+
+      console.log("[ProductForm] Product saved successfully", body);
       const productId = id || body.product?.id;
-      if (productId && imageFile) await uploadImage(productId);
+      if (productId && imageFile) {
+        try {
+          console.log(
+            "[ProductForm] Starting image upload for productId=",
+            productId,
+          );
+          await uploadImage(productId);
+          console.log(
+            "[ProductForm] Image upload finished for productId=",
+            productId,
+          );
+        } catch (uploadErr) {
+          console.error(
+            "[ProductForm] Image upload failed after product save:",
+            uploadErr,
+          );
+          alert(
+            "Product saved but image upload failed. You can retry uploading the image from product details.",
+          );
+          // still navigate, because product exists — user can retry image upload
+          navigate(`/products?shop_id=${shopId}`);
+          return;
+        }
+      }
+
+      // Only navigate after both product save and image upload (if any) have completed
       navigate(`/products?shop_id=${shopId}`);
+    } catch (err) {
+      console.error("[ProductForm] Unexpected error during save:", err);
+      alert("Unexpected error saving product. Check console for details.");
     }
   };
 
@@ -141,11 +217,11 @@ export default function ProductForm() {
       ) : (
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
+          className="p-6 space-y-4 bg-white border border-gray-200 rounded-lg shadow-sm"
         >
           {/* Name */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="block mb-1 text-sm font-medium text-gray-700">
               Name *
             </label>
             <input
@@ -159,12 +235,12 @@ export default function ProductForm() {
 
           {/* Product Code (was SKU) */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="block mb-1 text-sm font-medium text-gray-700">
               Product Code
             </label>
             <input
-              name="sku"
-              value={form.sku}
+              name="product_code"
+              value={form.product_code}
               onChange={handleChange}
               placeholder="e.g. PC-001"
               className={inputClass}
@@ -173,9 +249,11 @@ export default function ProductForm() {
 
           {/* Model Name */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="block mb-1 text-sm font-medium text-gray-700">
               Model Name
-              <span className="ml-1 text-xs text-gray-400">(e.g. Galaxy A35, iPhone 15)</span>
+              <span className="ml-1 text-xs text-gray-400">
+                (e.g. Galaxy A35, iPhone 15)
+              </span>
             </label>
             <input
               name="model_name"
@@ -189,7 +267,7 @@ export default function ProductForm() {
           {/* Price + Low stock */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Sale Price (Rs.)
               </label>
               <input
@@ -203,7 +281,7 @@ export default function ProductForm() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Low stock alert
               </label>
               <input
@@ -219,7 +297,7 @@ export default function ProductForm() {
 
           {/* Category */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="block mb-1 text-sm font-medium text-gray-700">
               Category
             </label>
             <select
@@ -240,7 +318,7 @@ export default function ProductForm() {
           {/* Initial Quantity (create only) */}
           {!id && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="block mb-1 text-sm font-medium text-gray-700">
                 Initial Quantity
               </label>
               <input
@@ -256,7 +334,7 @@ export default function ProductForm() {
 
           {/* Product Image */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="block mb-1 text-sm font-medium text-gray-700">
               Product image
             </label>
             <input
@@ -269,7 +347,7 @@ export default function ProductForm() {
               <img
                 src={preview}
                 alt="Preview"
-                className="mt-2 h-24 w-24 rounded object-cover"
+                className="object-cover w-24 h-24 mt-2 rounded"
               />
             )}
           </div>
@@ -278,14 +356,14 @@ export default function ProductForm() {
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
             >
               Save
             </button>
             <button
               type="button"
               onClick={() => navigate(`/products?shop_id=${shopId}`)}
-              className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
             >
               Cancel
             </button>

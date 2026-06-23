@@ -30,7 +30,7 @@ export default function Invoices() {
   }, [shopId, setSearchParams]);
 
   const filtered = invoices.filter((inv) =>
-    inv.invoice_number.toLowerCase().includes(filterInvoiceNum.toLowerCase())
+    inv.invoice_number.toLowerCase().includes(filterInvoiceNum.toLowerCase()),
   );
 
   return (
@@ -90,7 +90,10 @@ export default function Invoices() {
                         {inv.sale_id || "—"}
                       </td>
                       <td className="px-4 py-3 text-sm font-bold text-slate-900">
-                        ${Number(inv.sales?.total || 0).toFixed(2)}
+                        Rs.{" "}
+                        {Number(
+                          inv.sales?.total_amount ?? inv.sales?.total ?? 0,
+                        ).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span
@@ -98,8 +101,8 @@ export default function Invoices() {
                             inv.status === "paid"
                               ? "bg-emerald-100 text-emerald-800"
                               : inv.status === "cancelled"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-amber-100 text-amber-800"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-amber-100 text-amber-800"
                           }`}
                         >
                           {inv.status}
