@@ -6,6 +6,7 @@ const { listSuppliers, createSupplier, updateSupplier } = require('../validation
 router.use(loadProfile)
 
 router.get('/', listSuppliers, ctrl.list)
+router.get('/:id', ctrl.getOne)
 router.post('/', createSupplier, ctrl.create)
 router.put('/:id', updateSupplier, ctrl.update)
 router.delete('/:id', ctrl.remove)

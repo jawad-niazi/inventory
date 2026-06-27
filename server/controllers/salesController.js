@@ -47,7 +47,7 @@ exports.create = async (req, res, next) => {
     const shopId = resolveShopId(req)
     if (!assertShopAccess(req.appUser, shopId, res)) return
 
-    const { customer_id, total, items, total_profit } = req.body
+    const { customer_id, total, items, total_profit, paid_amount } = req.body
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Sale items are required' })
     }
@@ -109,6 +109,51 @@ exports.create = async (req, res, next) => {
     }
 
     if (!saleId) return res.status(500).json({ error: 'Failed to determine created sale id' })
+
+    // If customer owes money (we received less than total), update customer balance and ledger
+    const paidAmt = parseFloat(paid_amount || 0) || 0
+    const due_amount = Math.max(0, parseFloat(total || 0) - paidAmt)
+    if (customer_id && due_amount > 0) {
+      // Increase customer current_balance (they owe us)
+      const { data: custData, error: custErr } = await supabase
+        .from('customers')
+        .select('id, current_balance')
+        .eq('id', customer_id)
+        .single()
+      if (custErr) return next(custErr)
+
+      const newBal = (parseFloat(custData.current_balance || 0) + Number(due_amount))
+      const { error: updCustErr } = await supabase
+        .from('customers')
+        .update({ current_balance: newBal, updated_at: new Date().toISOString() })
+        .eq('id', customer_id)
+      if (updCustErr) return next(updCustErr)
+
+      // Insert ledger transaction
+      const { error: ledgerErr } = await supabase
+        .from('ledger_transactions')
+        .insert({
+          shop_id: shopId,
+          party_type: 'customer',
+          party_id: customer_id,
+          amount: Number(due_amount),
+          direction: 'credit',
+          reference_type: 'sale',
+          reference_id: saleId,
+          note: `Sale created, due amount recorded`,
+          created_by: req.appUser.id
+        })
+      if (ledgerErr) return next(ledgerErr)
+    }
+
+    // Persist paid_amount on sale header if provided
+    if (paidAmt > 0) {
+      const { error: updSaleErr } = await supabase
+        .from('sales')
+        .update({ paid_amount: paidAmt })
+        .eq('id', saleId)
+      if (updSaleErr) console.warn('[sales.create] failed to persist paid_amount', updSaleErr)
+    }
 
     res.status(201).json({ sale_id: saleId, message: 'Sale created successfully' })
   } catch (err) {

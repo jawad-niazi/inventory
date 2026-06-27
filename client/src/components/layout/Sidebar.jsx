@@ -31,6 +31,7 @@ export default function Sidebar() {
     { to: "/quotations", label: "Quotations" },
     { to: "/purchases", label: "Purchases" },
     { to: "/suppliers", label: "Suppliers" },
+    { to: "/customers", label: "👥 Customers" },
     { to: "/transfers", label: "Transfers" },
     { to: "/invoices", label: "Invoices" },
   ];

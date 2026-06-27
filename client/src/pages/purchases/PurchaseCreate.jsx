@@ -36,17 +36,18 @@ export default function PurchaseCreate() {
     return "";
   });
 
-  const [status, setStatus] = useState(() => {
+  // status removed: purchases are immediately active and stock-updated on creation
+  const [paidAmount, setPaidAmount] = useState(() => {
     try {
       const saved = localStorage.getItem("inventory_purchase_cart");
       if (saved) {
         const parsed = JSON.parse(saved);
-        return parsed.status || "received";
+        return parsed.paidAmount || 0;
       }
     } catch (e) {
       console.error(e);
     }
-    return "received";
+    return 0;
   });
 
   const [products, setProducts] = useState([]);
@@ -82,9 +83,9 @@ export default function PurchaseCreate() {
   useEffect(() => {
     localStorage.setItem(
       "inventory_purchase_cart",
-      JSON.stringify({ items, selectedSupplierId, status }),
+      JSON.stringify({ items, selectedSupplierId, paidAmount }),
     );
-  }, [items, selectedSupplierId, status]);
+  }, [items, selectedSupplierId, paidAmount]);
 
   const addProductRow = (prodId) => {
     if (!prodId) return;
@@ -139,13 +140,15 @@ export default function PurchaseCreate() {
       0,
     );
 
+    const due_amount = Number(total_amount) - Number(paidAmount || 0);
     const res = await apiFetch("/api/purchases", {
       method: "POST",
       body: JSON.stringify({
         shop_id: shopId,
         supplier_id: selectedSupplierId || null,
         total_amount,
-        status,
+        paid_amount: Number(paidAmount || 0),
+        due_amount: due_amount > 0 ? Number(due_amount) : 0,
         items,
       }),
     });
@@ -213,23 +216,22 @@ export default function PurchaseCreate() {
               </div>
             </div>
 
-            {/* Status Select */}
+            {/* Paid Amount */}
             <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-4">
               <label className="text-sm font-semibold text-slate-700">
-                Order Delivery Status
+                Amount Paid (Rs.)
               </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={paidAmount}
+                onChange={(e) => setPaidAmount(e.target.value)}
                 className={inputClass}
-              >
-                <option value="received">
-                  Received (Adds directly to inventory stock)
-                </option>
-                <option value="pending">
-                  Pending (Awaiting intake shipment)
-                </option>
-              </select>
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                Any unpaid portion will be recorded as supplier balance.
+              </p>
             </div>
           </div>
 

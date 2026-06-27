@@ -119,13 +119,12 @@ export default function SalesList() {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <span
-                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            s.status === "completed"
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${s.status === "completed"
                               ? "bg-emerald-100 text-emerald-800"
                               : s.status === "cancelled"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-amber-100 text-amber-800"
-                          }`}
+                                ? "bg-red-100 text-red-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
                         >
                           {s.status}
                         </span>

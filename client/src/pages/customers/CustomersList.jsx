@@ -3,10 +3,10 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ShopSelector from "../../components/common/ShopSelector";
 import { apiFetch } from "../../utils/api";
 
-export default function SuppliersList() {
+export default function CustomersList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [shopId, setShopId] = useState(searchParams.get("shop_id") || "");
-  const [suppliers, setSuppliers] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -17,13 +17,13 @@ export default function SuppliersList() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiFetch(`/api/suppliers?shop_id=${shopId}`);
+      const res = await apiFetch(`/api/customers?shop_id=${shopId}`);
       if (res.ok) {
         const body = await res.json();
-        setSuppliers(body.suppliers || []);
+        setCustomers(body.customers || []);
       } else {
         const body = await res.json();
-        setError(body.error || "Failed to load suppliers");
+        setError(body.error || "Failed to load customers");
       }
     } catch (err) {
       setError("Network error. Please try again.");
@@ -40,54 +40,52 @@ export default function SuppliersList() {
     if (shopId) setSearchParams({ shop_id: shopId });
   }, [shopId, setSearchParams]);
 
-  const handleShopChange = (id) => setShopId(id);
-
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this supplier?")) return;
+    if (!confirm("Are you sure you want to delete this customer?")) return;
     try {
-      const res = await apiFetch(`/api/suppliers/${id}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/customers/${id}`, { method: "DELETE" });
       if (res.ok) {
         load();
       } else {
         const body = await res.json();
-        alert(body.error || "Failed to delete supplier");
+        alert(body.error || "Failed to delete customer");
       }
     } catch {
       alert("Network error. Please try again.");
     }
   };
 
-  const filtered = (suppliers || []).filter((s) => {
-    const name = (s?.company_name || "").toString().toLowerCase();
-    const phone = (s?.phone || "").toString().toLowerCase();
-    const addr = (s?.address || "").toString().toLowerCase();
+  const filtered = (customers || []).filter((c) => {
+    const name = (c?.name || "").toLowerCase();
+    const phone = (c?.phone || "").toLowerCase();
+    const email = (c?.email || "").toLowerCase();
     const qv = (q || "").toLowerCase();
-    return name.includes(qv) || phone.includes(qv) || addr.includes(qv);
+    return name.includes(qv) || phone.includes(qv) || email.includes(qv);
   });
 
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-2xl font-bold text-gray-900 font-sans">
-          Suppliers
+          Customers
         </h2>
         {shopId && (
           <Link
-            to={`/suppliers/new?shop_id=${shopId}`}
+            to={`/customers/new?shop_id=${shopId}`}
             className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
           >
-            Add Supplier
+            ➕ Add New Customer
           </Link>
         )}
       </div>
 
-      <ShopSelector value={shopId} onChange={handleShopChange} />
+      <ShopSelector value={shopId} onChange={setShopId} />
 
       {shopId && (
         <>
           <div className="mt-4 mb-4">
             <input
-              placeholder="Search by company name, phone, address..."
+              placeholder="Search by name, phone, or email..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -108,13 +106,16 @@ export default function SuppliersList() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Company Name
+                      Customer Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Phone
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Address
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Outstanding Balance
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                       Actions
@@ -125,48 +126,70 @@ export default function SuppliersList() {
                   {filtered.length === 0 ? (
                     <tr>
                       <td
-                        colSpan="4"
+                        colSpan="5"
                         className="px-6 py-8 text-center text-sm text-gray-500"
                       >
-                        No suppliers found.
+                        No customers found.
                       </td>
                     </tr>
                   ) : (
-                    filtered.map((supplier) => (
+                    filtered.map((customer) => (
                       <tr
-                        key={supplier?.id}
+                        key={customer?.id}
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-gray-900">
-                          {supplier?.company_name || "—"}
+                          {customer?.name || "—"}
                         </td>
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                          {supplier?.phone || "—"}
+                          {customer?.phone || "—"}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                          {supplier?.address || "—"}
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
+                          {customer?.email || "—"}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium space-x-3">
-                          <button
-                            onClick={() =>
-                              navigate(`/suppliers/${supplier.id}?shop_id=${shopId}`)
+                        <td className="whitespace-nowrap px-6 py-4 text-sm text-right">
+                          <span
+                            className={
+                              Number(customer?.current_balance || 0) > 0
+                                ? "font-bold text-red-600"
+                                : "text-gray-500"
                             }
-                            className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition-all duration-150"
                           >
-                            📖 View Ledger
-                          </button>
-                          <Link
-                            to={`/suppliers/${supplier.id}/edit?shop_id=${shopId}`}
-                            className="text-emerald-600 hover:text-emerald-900 transition-colors"
-                          >
-                            Edit
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(supplier.id)}
-                            className="text-red-600 hover:text-red-900 transition-colors"
-                          >
-                            Delete
-                          </button>
+                            Rs.{" "}
+                            {Number(customer?.current_balance || 0).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )}
+                          </span>
+                        </td>
+                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() =>
+                                navigate(
+                                  `/customers/${customer.id}?shop_id=${shopId}`,
+                                )
+                              }
+                              className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition-all duration-150"
+                            >
+                              📖 View Ledger
+                            </button>
+                            <Link
+                              to={`/customers/${customer.id}/edit?shop_id=${shopId}`}
+                              className="text-emerald-600 hover:text-emerald-900 transition-colors text-xs font-semibold"
+                            >
+                              ✏️ Edit
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(customer.id)}
+                              className="text-red-600 hover:text-red-900 transition-colors text-xs font-semibold"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))

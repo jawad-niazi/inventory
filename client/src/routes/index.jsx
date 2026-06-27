@@ -17,6 +17,12 @@ import InventoryList from "../pages/inventory/InventoryList";
 // Suppliers Pages
 import SuppliersList from "../pages/suppliers/SuppliersList";
 import SupplierForm from "../pages/suppliers/SupplierForm";
+import SupplierDetails from "../pages/suppliers/SupplierDetails";
+
+// Customers Pages
+import CustomersList from "../pages/customers/CustomersList";
+import CustomerForm from "../pages/customers/CustomerForm";
+import CustomerDetails from "../pages/customers/CustomerDetails";
 
 // Quotations Pages
 import Quotations from "../pages/quotations/Quotations";
@@ -82,10 +88,17 @@ export default function AppRoutes() {
           <Route path="/invoices" element={<Invoices />} />
           <Route path="/invoices/:id" element={<InvoiceDetails />} />
 
+          {/* Customers Routes */}
+          <Route path="/customers" element={<CustomersList />} />
+          <Route path="/customers/new" element={<CustomerForm />} />
+          <Route path="/customers/:id/edit" element={<CustomerForm />} />
+          <Route path="/customers/:id" element={<CustomerDetails />} />
+
           {/* Suppliers Routes */}
           <Route path="/suppliers" element={<SuppliersList />} />
           <Route path="/suppliers/new" element={<SupplierForm />} />
           <Route path="/suppliers/:id/edit" element={<SupplierForm />} />
+          <Route path="/suppliers/:id" element={<SupplierDetails />} />
 
           {/* Quotations Routes */}
           <Route path="/quotations" element={<Quotations />} />

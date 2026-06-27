@@ -117,53 +117,7 @@ export default function PurchaseList() {
                           >
                             {p.status || "received"}
                           </span>
-                          {p.status !== "received" && (
-                            <button
-                              onClick={async () => {
-                                if (!confirm("Mark this purchase as received?"))
-                                  return;
-                                try {
-                                  const res = await apiFetch(
-                                    `/api/purchases/${p.id}/status`,
-                                    {
-                                      method: "PUT",
-                                      body: JSON.stringify({
-                                        status: "received",
-                                        shop_id: shopId,
-                                      }),
-                                    },
-                                  );
-                                  if (res.ok) {
-                                    // update local state
-                                    setPurchases((cur) =>
-                                      cur.map((x) =>
-                                        x.id === p.id
-                                          ? { ...x, status: "received" }
-                                          : x,
-                                      ),
-                                    );
-                                  } else {
-                                    const body = await res
-                                      .json()
-                                      .catch(() => ({}));
-                                    alert(
-                                      body.error ||
-                                        "Failed to update purchase status",
-                                    );
-                                  }
-                                } catch (err) {
-                                  console.error("Failed to mark received", err);
-                                  alert(
-                                    "Failed to update status. Check console.",
-                                  );
-                                }
-                              }}
-                              className="text-emerald-600 hover:text-emerald-700 text-xs font-semibold"
-                              title="Mark as Received"
-                            >
-                              ✓
-                            </button>
-                          )}
+                          {/* Auto-received on creation; manual receive button removed */}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm">

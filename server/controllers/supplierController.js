@@ -19,6 +19,37 @@ exports.list = async (req, res, next) => {
   }
 }
 
+exports.getOne = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const shopId = resolveShopId(req)
+    if (!assertShopAccess(req.appUser, shopId, res)) return
+
+    const { data: supplier, error: supErr } = await supabase
+      .from('suppliers')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (supErr) return next(supErr)
+    if (!assertShopAccess(req.appUser, supplier.shop_id, res)) return
+
+    // Fetch ledger transactions for this supplier
+    const { data: ledger, error: ledgerErr } = await supabase
+      .from('ledger_transactions')
+      .select('*')
+      .eq('shop_id', supplier.shop_id)
+      .eq('party_type', 'supplier')
+      .eq('party_id', id)
+      .order('created_at', { ascending: false })
+
+    if (ledgerErr) return next(ledgerErr)
+
+    res.json({ supplier, ledger: ledger || [] })
+  } catch (err) {
+    next(err)
+  }
+}
+
 exports.create = async (req, res, next) => {
   try {
     const shopId = resolveShopId(req)

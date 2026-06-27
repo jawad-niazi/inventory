@@ -43,19 +43,21 @@ exports.create = async (req, res, next) => {
     const shopId = resolveShopId(req)
     if (!assertShopAccess(req.appUser, shopId, res)) return
 
-    const { supplier_id, total_amount, status, items } = req.body
+    const { supplier_id, total_amount, paid_amount, items } = req.body
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Purchase items are required' })
     }
 
     // 1. Create Purchase
+    const paidAmt = parseFloat(paid_amount || 0) || 0
     const { data: purchase, error: purchaseErr } = await supabase
       .from('purchases')
       .insert({
         shop_id: shopId,
         supplier_id: supplier_id || null,
         total_amount: total_amount || 0,
-        status: status || 'received',
+        paid_amount: paidAmt,
+        status: 'received',
         created_by: req.appUser.id
       })
       .select()
@@ -83,9 +85,8 @@ exports.create = async (req, res, next) => {
 
     if (itemsErr) return next(itemsErr)
 
-    // If purchase is received, increase inventory
-    if (status === 'received' || !status) {
-      for (const item of items) {
+    // On creation purchases are immediately received: increase inventory
+    for (const item of items) {
         const qty = parseInt(item.quantity, 10)
         const prodId = item.product_id
 
@@ -134,7 +135,41 @@ exports.create = async (req, res, next) => {
             adjusted_by: req.appUser.id
           })
       }
-    }
+
+      // If supplier owes money (we haven't paid full amount), record ledger
+      const due_amount = (parseFloat(total_amount || 0) - paidAmt) || 0
+      if (supplier_id && due_amount > 0) {
+        // Increase supplier current_balance (we owe more)
+        const { data: supData, error: supErr } = await supabase
+          .from('suppliers')
+          .select('id, current_balance')
+          .eq('id', supplier_id)
+          .single()
+        if (supErr) return next(supErr)
+
+        const newBal = (parseFloat(supData.current_balance || 0) + Number(due_amount))
+        const { error: updSupErr } = await supabase
+          .from('suppliers')
+          .update({ current_balance: newBal, updated_at: new Date().toISOString() })
+          .eq('id', supplier_id)
+        if (updSupErr) return next(updSupErr)
+
+        // Insert ledger transaction
+        const { error: ledgerErr } = await supabase
+          .from('ledger_transactions')
+          .insert({
+            shop_id: shopId,
+            party_type: 'supplier',
+            party_id: supplier_id,
+            amount: Number(due_amount),
+            direction: 'debit',
+            reference_type: 'purchase',
+            reference_id: purchase.id,
+            note: `Purchase created, due amount recorded`,
+            created_by: req.appUser.id
+          })
+        if (ledgerErr) return next(ledgerErr)
+      }
 
     res.status(201).json({ purchase })
   } catch (err) {

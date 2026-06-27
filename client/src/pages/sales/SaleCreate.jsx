@@ -43,11 +43,9 @@ export default function SaleCreate() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [paidAmount, setPaidAmount] = useState(0);
 
-  // Inline Customer Create State
-  const [showAddCustomer, setShowAddCustomer] = useState(false);
-  const [newCustomerName, setNewCustomerName] = useState("");
-  const [newCustomerPhone, setNewCustomerPhone] = useState("");
+  // Inline Customer Create State — removed; use /customers/new instead
 
   // Sync state to localStorage
   useEffect(() => {
@@ -201,31 +199,6 @@ export default function SaleCreate() {
     setCart(cart.filter((item) => item.product_id !== productId));
   };
 
-  const handleAddCustomerSubmit = async (e) => {
-    e.preventDefault();
-    if (!newCustomerName.trim()) return;
-
-    const res = await apiFetch("/api/customers", {
-      method: "POST",
-      body: JSON.stringify({
-        shop_id: shopId,
-        name: newCustomerName,
-        phone: newCustomerPhone,
-      }),
-    });
-
-    if (res.ok) {
-      const body = await res.json();
-      const created = body.customer;
-      setCustomers([...customers, created]);
-      setSelectedCustomerId(created.id);
-      setNewCustomerName("");
-      setNewCustomerPhone("");
-      setShowAddCustomer(false);
-    } else {
-      alert("Failed to create customer");
-    }
-  };
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
@@ -242,6 +215,8 @@ export default function SaleCreate() {
       customer_id: selectedCustomerId || null,
       total,
       total_profit: cartProfit,
+      paid_amount: Number(paidAmount || 0),
+      due_amount: Math.max(0, Number(total) - Number(paidAmount || 0)),
       items: cart.map((item) => ({
         product_id: item.product_id,
         quantity: item.quantity,
@@ -394,60 +369,48 @@ export default function SaleCreate() {
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-6">
           {/* Customer Section */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-semibold text-slate-700">
-                Customer
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowAddCustomer(!showAddCustomer)}
-                className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
-              >
-                {showAddCustomer ? "Select Existing" : "+ Add Customer"}
-              </button>
-            </div>
-
-            {showAddCustomer ? (
-              <form
-                onSubmit={handleAddCustomerSubmit}
-                className="space-y-2 border border-slate-200 rounded p-3 bg-slate-50"
-              >
-                <input
-                  placeholder="Customer Name"
-                  value={newCustomerName}
-                  onChange={(e) => setNewCustomerName(e.target.value)}
-                  required
-                  className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs focus:outline-none focus:border-emerald-500"
-                />
-                <input
-                  placeholder="Phone"
-                  value={newCustomerPhone}
-                  onChange={(e) => setNewCustomerPhone(e.target.value)}
-                  className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs focus:outline-none focus:border-emerald-500"
-                />
-                <button
-                  type="submit"
-                  className="w-full rounded bg-emerald-600 py-1 text-xs font-medium text-white hover:bg-emerald-700"
-                >
-                  Save Customer
-                </button>
-              </form>
-            ) : (
-              <select
-                value={selectedCustomerId}
-                onChange={(e) => setSelectedCustomerId(e.target.value)}
-                className={inputClass}
-              >
-                <option value="">Walk-in Customer</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.phone ? `(${c.phone})` : ""}
-                  </option>
-                ))}
-              </select>
-            )}
+            <label className="text-sm font-semibold text-slate-700 mb-2 block">
+              Customer
+            </label>
+            <select
+              value={selectedCustomerId}
+              onChange={(e) => setSelectedCustomerId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Walk-in Customer</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} {c.phone ? `(${c.phone})` : ""}
+                </option>
+              ))}
+            </select>
           </div>
-
+          {/* Payment Summary */}
+          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">Total</span>
+              <span className="text-xl font-bold text-slate-900">
+                Rs. {cartTotal.toFixed(2)}
+              </span>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-slate-700">
+                Amount Paid (Rs.)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={paidAmount}
+                onChange={(e) => setPaidAmount(e.target.value)}
+                className={inputClass}
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Due: Rs.{" "}
+                {Math.max(0, cartTotal - Number(paidAmount || 0)).toFixed(2)}
+              </p>
+            </div>
+          </div>
           {/* Cart Items */}
           <div>
             <h3 className="text-sm font-semibold text-slate-700 mb-2">
