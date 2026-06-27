@@ -113,7 +113,7 @@ export default function SupplierDetails() {
                   </td>
                   <td className="p-3 font-medium">
                     <span className="block text-gray-800">
-                      {row.direction === "in" ? "🎯 Purchase" : "💸 Payment"}
+                      {row.direction === "in" ? "Purchase" : "Payment"}
                     </span>
                     <span className="font-mono text-xs text-gray-400">
                       ID:{" "}

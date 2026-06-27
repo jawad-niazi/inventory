@@ -153,7 +153,7 @@ export default function SuppliersList() {
                             }
                             className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition-all duration-150"
                           >
-                            📖 View Ledger
+                            View Ledger
                           </button>
                           <Link
                             to={`/suppliers/${supplier.id}/edit?shop_id=${shopId}`}

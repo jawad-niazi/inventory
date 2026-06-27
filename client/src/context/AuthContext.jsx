@@ -76,6 +76,7 @@ export const AuthProvider = ({ children }) => {
         setRole(null);
         setShopId(null);
       }
+      setLoading(false);
     });
 
     return () => {

@@ -74,7 +74,7 @@ export default function CustomersList() {
             to={`/customers/new?shop_id=${shopId}`}
             className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
           >
-            ➕ Add New Customer
+            Add New Customer
           </Link>
         )}
       </div>
@@ -175,13 +175,13 @@ export default function CustomersList() {
                               }
                               className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition-all duration-150"
                             >
-                              📖 View Ledger
+                              View Ledger
                             </button>
                             <Link
                               to={`/customers/${customer.id}/edit?shop_id=${shopId}`}
                               className="text-emerald-600 hover:text-emerald-900 transition-colors text-xs font-semibold"
                             >
-                              ✏️ Edit
+                              Edit
                             </Link>
                             <button
                               onClick={() => handleDelete(customer.id)}

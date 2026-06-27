@@ -4,10 +4,9 @@ import { useAuth } from "../../hooks/useAuth";
 import { APP_NAME } from "../../constants";
 
 const navLinkClass = (active) =>
-  `block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-    active
-      ? "bg-emerald-600 text-white"
-      : "text-slate-300 hover:bg-slate-700 hover:text-white"
+  `block rounded-md px-3 py-2 text-sm font-medium transition-colors ${active
+    ? "bg-emerald-600 text-white"
+    : "text-slate-300 hover:bg-slate-700 hover:text-white"
   }`;
 
 export default function Sidebar() {
@@ -31,7 +30,7 @@ export default function Sidebar() {
     { to: "/quotations", label: "Quotations" },
     { to: "/purchases", label: "Purchases" },
     { to: "/suppliers", label: "Suppliers" },
-    { to: "/customers", label: "👥 Customers" },
+    { to: "/customers", label: "Customers" },
     { to: "/transfers", label: "Transfers" },
     { to: "/invoices", label: "Invoices" },
   ];

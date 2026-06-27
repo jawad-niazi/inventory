@@ -70,7 +70,7 @@ export default function CustomerDetails() {
           onClick={() => navigate(`/customers?shop_id=${shopId}`)}
           className="px-4 py-2 text-sm font-medium transition border rounded-md bg-white hover:bg-gray-50 shadow-sm"
         >
-          ← Back to Customers
+          Back to Customers
         </button>
       </div>
 
@@ -120,8 +120,8 @@ export default function CustomerDetails() {
                   <td className="p-3 font-medium">
                     <span className="block text-gray-800">
                       {row.direction === "debit"
-                        ? "🧾 Sales Invoice"
-                        : "💵 Cash Received"}
+                        ? "Sales Invoice"
+                        : "Cash Received"}
                     </span>
                     <span className="font-mono text-xs text-gray-400">
                       Ref:{" "}

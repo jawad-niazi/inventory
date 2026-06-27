@@ -18,6 +18,7 @@ export default function SupplierForm() {
     company_name: "",
     phone: "",
     address: "",
+    current_balance: "",
   });
 
   useEffect(() => {
@@ -63,6 +64,10 @@ export default function SupplierForm() {
     const url = id ? `/api/suppliers/${id}` : "/api/suppliers";
     const method = id ? "PUT" : "POST";
     const payload = id ? form : { ...form, shop_id: shopId };
+    
+    if (!id && form.current_balance !== "") {
+      payload.current_balance = Number(form.current_balance) || 0;
+    }
 
     try {
       const res = await apiFetch(url, {
@@ -135,6 +140,28 @@ export default function SupplierForm() {
             placeholder="Enter supplier address"
           />
         </div>
+
+        {!id && (
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+              Opening Balance (Rs.)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.current_balance}
+              onChange={(e) =>
+                setForm({ ...form, current_balance: e.target.value })
+              }
+              className={inputClass}
+              placeholder="0.00 — leave blank for zero"
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Enter any existing balance owed to this supplier.
+            </p>
+          </div>
+        )}
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
           <button

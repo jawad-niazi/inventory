@@ -17,7 +17,6 @@ export default function CustomerForm() {
   const [form, setForm] = useState({
     name: "",
     phone: "",
-    email: "",
     address: "",
     current_balance: "",
   });
@@ -70,7 +69,6 @@ export default function CustomerForm() {
     const payload = {
       name: form.name,
       phone: form.phone,
-      email: form.email,
       address: form.address,
     };
 
@@ -148,19 +146,6 @@ export default function CustomerForm() {
 
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-            Email
-          </label>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className={inputClass}
-            placeholder="e.g. customer@example.com"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
             Address
           </label>
           <textarea
@@ -207,7 +192,7 @@ export default function CustomerForm() {
             disabled={submitting}
             className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm"
           >
-            {submitting ? "Saving..." : id ? "Update Customer" : "Add Customer"}
+            {submitting ? "Saving..." : "Save Customer"}
           </button>
         </div>
       </form>
