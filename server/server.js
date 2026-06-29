@@ -13,11 +13,7 @@ const app = express()
 // 🌐 CORS configuration: Apne Vercel frontend link ko allow karo
 // 🌐 CORS configuration: Is Vercel link ko allow karo
 app.use(cors({
-  origin: [
-    'https://inventory-ikmd96h2d-jkniazi372-9074s-projects.vercel.app', // 👈 Aap ka exact Vercel link
-    'http://localhost:5173',                                              // Local testing ke liye
-    'http://localhost:3000'
-  ],
+  origin: '*', // 👈 Is se har frontend URL allow ho jayega, koi link block nahi hoga
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
