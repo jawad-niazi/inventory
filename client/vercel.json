@@ -1,8 +1,13 @@
 {
-  "rewrites": [
+  "routes": [
     {
-      "source": "/:path*",
-      "destination": "/index.html"
+      "src": "^/api(/)?.*$",
+      "dest": "/api$1",
+      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
