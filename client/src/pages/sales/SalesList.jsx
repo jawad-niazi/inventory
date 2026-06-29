@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import ShopSelector from "../../components/common/ShopSelector";
 import { apiFetch } from "../../utils/api";
+import { Plus, Search, ExternalLink } from "lucide-react";
 
 export default function SalesList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -40,33 +41,41 @@ export default function SalesList() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-900">Sales</h2>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Sales & Transactions</h2>
+        </div>
         {shopId && (
           <Link
             to={`/sales/new?shop_id=${shopId}`}
-            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+            className="flex items-center gap-2 rounded-full bg-brand-neon px-5 py-2.5 text-sm font-bold text-slate-900 shadow-sm hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(206,243,109,0.4)] transition-all duration-200"
           >
+            <Plus className="w-4 h-4" strokeWidth={3} />
             New Sale (POS)
           </Link>
         )}
       </div>
 
-      <ShopSelector value={shopId} onChange={setShopId} />
+      <div className="mb-6">
+        <ShopSelector value={shopId} onChange={(id) => { setShopId(id); }} />
+      </div>
 
       {shopId && (
         <>
-          <div className="mb-4 flex flex-wrap gap-3">
-            <input
-              placeholder="Search by customer"
-              value={filterCustomer}
-              onChange={(e) => setFilterCustomer(e.target.value)}
-              className="rounded-md border border-slate-350 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 w-full max-w-xs"
-            />
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <div className="relative max-w-md w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <input
+                placeholder="Search by customer..."
+                value={filterCustomer}
+                onChange={(e) => setFilterCustomer(e.target.value)}
+                className="w-full rounded-full border-0 bg-white px-10 py-2.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon transition-all shadow-sm"
+              />
+            </div>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-md border border-slate-350 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="rounded-full border-0 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-brand-neon transition-all shadow-sm cursor-pointer"
             >
               <option value="">All Statuses</option>
               <option value="completed">Completed</option>
@@ -76,81 +85,85 @@ export default function SalesList() {
           </div>
 
           {loading ? (
-            <p className="text-slate-650">Loading...</p>
+            <p className="text-slate-500 font-medium py-4">Loading sales history...</p>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Date
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Customer
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Created By
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Total
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {filtered.map((s) => (
-                    <tr key={s.id}>
-                      <td className="px-4 py-3 text-sm text-slate-600">
-                        {new Date(s.created_at).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                        {s.customers?.name || "Walk-in Customer"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">
-                        {s.app_users?.email || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-bold text-slate-900">
-                        Rs. {Number(s.total).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${s.status === "completed"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : s.status === "cancelled"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-amber-100 text-amber-800"
-                            }`}
-                        >
-                          {s.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <Link
-                          to={`/sales/${s.id}?shop_id=${shopId}`}
-                          className="text-emerald-600 hover:text-emerald-700 font-semibold"
-                        >
-                          View Details
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                  {filtered.length === 0 && (
+            <div className="rounded-4xl bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead className="border-b border-slate-100 bg-white">
                     <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-8 text-center text-sm text-slate-500"
-                      >
-                        No sales found.
-                      </td>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Date
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Customer
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Created By
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">
+                        Total
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Status
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">
+                        Actions
+                      </th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filtered.map((s) => (
+                      <tr key={s.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/80 transition-colors duration-200 group">
+                        <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                          {new Date(s.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-slate-900">
+                          {s.customers?.name || "Walk-in Customer"}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                          {s.app_users?.email || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-slate-900 font-mono text-right">
+                          Rs. {Number(s.total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span
+                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${
+                              s.status === "completed"
+                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/50"
+                                : s.status === "cancelled"
+                                  ? "bg-red-50 text-red-700 ring-1 ring-red-200/50"
+                                  : "bg-amber-50 text-amber-700 ring-1 ring-amber-200/50"
+                            }`}
+                          >
+                            {s.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Link
+                            to={`/sales/${s.id}?shop_id=${shopId}`}
+                            className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            View Details
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                    {filtered.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-6 py-12 text-center text-sm font-medium text-slate-400"
+                        >
+                          No sales found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>

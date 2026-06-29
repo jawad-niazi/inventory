@@ -155,7 +155,16 @@ exports.create = async (req, res, next) => {
       if (updSaleErr) console.warn('[sales.create] failed to persist paid_amount', updSaleErr)
     }
 
-    res.status(201).json({ sale_id: saleId, message: 'Sale created successfully' })
+    // Fetch the auto-generated invoice if it exists
+    const { data: invoice } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('sale_id', saleId)
+      .single()
+
+    const invoiceId = invoice?.id || null
+
+    res.status(201).json({ sale_id: saleId, invoice_id: invoiceId, message: 'Sale created successfully' })
   } catch (err) {
     next(err)
   }
