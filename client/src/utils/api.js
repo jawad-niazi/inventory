@@ -1,5 +1,6 @@
 import { supabase } from "../services/supabase";
 
+// 🌐 Jab live chalega toh Render ka URL pakray ga, local par empty string
 const BASE_URL = import.meta.env.PROD 
   ? "https://inventory-4zxb.onrender.com" 
   : "";
@@ -20,7 +21,11 @@ export async function apiFetch(path, options = {}) {
     delete headers["Content-Type"];
   }
 
-  const res = await fetch(path, { ...options, headers });
+  // 🎯 Yahan hum ne BASE_URL ko path ke sath jor diya hai
+  const fullPath = `${BASE_URL}${path}`;
+
+  // 🚀 Ab fetch direct path par nahi, balki fullPath par request bhejega
+  const res = await fetch(fullPath, { ...options, headers });
   return res;
 }
 
