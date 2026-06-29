@@ -107,20 +107,12 @@ export default function SupplierDetails() {
             </thead>
             <tbody className="text-gray-600 divide-y">
               {ledger.map((row) => {
-                const totalInvoice = Number(
-                  row.total_amount ||
-                  row.grand_total ||
-                  (row.direction === "in" ? row.amount : 0) ||
-                  0,
-                );
-                const paidAmount = Number(
-                  row.paid_amount ||
-                  row.paid ||
-                  (row.direction === "out" ? row.amount : 0) ||
-                  0,
-                );
-                const remainingDue =
-                  row.remaining_due ?? row.due_amount ?? (totalInvoice - paidAmount);
+                const isPurchase = row.reference_type === "purchase";
+                const totalInvoice = isPurchase ? Number(row.total_amount || 0) : 0;
+                const paidAmount = isPurchase 
+                  ? Number(row.paid_amount || 0) 
+                  : Number(row.amount || 0); // For direct payments
+                const remainingDue = isPurchase ? Number(row.due_amount || 0) : 0;
 
                 return (
                   <tr key={row.id} className="transition hover:bg-gray-50">
@@ -129,23 +121,20 @@ export default function SupplierDetails() {
                     </td>
                     <td className="p-3 font-medium">
                       <span className="block text-gray-800">
-                        {row.direction === "in" ? "Purchase" : "Payment"}
+                        {isPurchase ? "Purchase" : "Payment"}
                       </span>
                       <span className="font-mono text-xs text-gray-400">
                         ID: {row.reference_id ? row.reference_id.substring(0, 8) : "—"}
                       </span>
                     </td>
-                    {/* Total Invoice */}
                     <td className="p-3 font-semibold text-right text-gray-800">
-                      Rs. {Number(row.total_amount || row.amount || 0).toFixed(2)}
+                      {isPurchase ? `Rs. ${totalInvoice.toFixed(2)}` : "—"}
                     </td>
-                    {/* Paid Amount */}
                     <td className="p-3 font-semibold text-right text-green-600">
-                      Rs. {Number(row.paid_amount || 0).toFixed(2)}
+                      Rs. {paidAmount.toFixed(2)}
                     </td>
-                    {/* Remaining Due */}
                     <td className="p-3 font-bold text-right text-red-600">
-                      Rs. {Number(row.due_amount || row.remaining_due || 0).toFixed(2)}
+                      {isPurchase ? `Rs. ${remainingDue.toFixed(2)}` : "—"}
                     </td>
                     <td className="p-3 text-xs italic text-gray-400">
                       {row.note || "—"}
@@ -155,10 +144,7 @@ export default function SupplierDetails() {
               })}
               {ledger.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="py-8 italic text-center text-slate-400"
-                  >
+                  <td colSpan={6} className="py-8 italic text-center text-slate-400">
                     No ledger entries recorded yet for this supplier.
                   </td>
                 </tr>

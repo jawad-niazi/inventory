@@ -15,52 +15,23 @@ export default function CustomerDetails() {
 
   const load = async () => {
     if (!shopId || !id) {
-      console.log("🔍 DEBUG: shopId or id is missing on load execution", { shopId, id });
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const supabaseRawData = localStorage.getItem("sb-vrxbpjclusvuxmcsmzbi-auth-token");
-      console.log("🔍 DEBUG: Raw Supabase Data from LocalStorage:", supabaseRawData);
-
-      let accessToken = "";
-      if (supabaseRawData) {
-        try {
-          const parsed = JSON.parse(supabaseRawData);
-          accessToken = parsed.access_token || "";
-          console.log("🔍 DEBUG: Parsed Access Token (First 15 chars):", accessToken ? accessToken.substring(0, 15) + "..." : "EMPTY");
-        } catch (e) {
-          console.error("❌ DEBUG: JSON Parse Error on token string:", e);
-        }
-      }
-
-      const targetUrl = `http://localhost:4000/api/customers/${id}?shop_id=${shopId}`;
-      const authHeader = accessToken ? `Bearer ${accessToken}` : "NONE";
-      console.log("🚀 DEBUG: Sending Fetch Request to:", targetUrl, "with Authorization Header:", authHeader);
-
-      const res = await fetch(targetUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": accessToken ? `Bearer ${accessToken}` : ""
-        }
-      });
-
-      console.log("📥 DEBUG: Server Response Status Code:", res.status);
+      const res = await apiFetch(`/api/customers/${id}?shop_id=${shopId}`);
 
       if (res.ok) {
         const body = await res.json();
-        console.log("✅ DEBUG: Data payload received successfully:", body);
         setCustomer(body.customer);
         setLedger(body.ledger || []);
         setError(null);
       } else {
-        console.error(`❌ DEBUG: Response not OK. Status: ${res.status}`);
         setError("Failed to load ledger data");
       }
     } catch (err) {
-      console.error("❌ DEBUG: Network Try/Catch Error:", err);
+      console.error(err);
       setError("Network error loading ledger");
     } finally {
       setLoading(false);
@@ -150,10 +121,12 @@ export default function CustomerDetails() {
             </thead>
             <tbody className="text-gray-600 divide-y">
               {ledger.map((row) => {
-                // 🎯 Safe database mapping
-                const totalInvoice = Number(row.total_amount || row.amount || 0);
-                const paidAmount = Number(row.paid_amount || (row.direction === "credit" ? row.amount : 0));
-                const remainingDue = Number(row.due_amount || row.remaining_due || 0);
+                const isSale = row.reference_type === "sale";
+                const totalInvoice = isSale ? Number(row.total_amount || 0) : 0;
+                const paidAmount = isSale 
+                  ? Number(row.paid_amount || 0) 
+                  : Number(row.amount || 0); // For direct payments
+                const remainingDue = isSale ? Number(row.due_amount || 0) : 0;
 
                 return (
                   <tr key={row.id} className="transition hover:bg-gray-50">
@@ -162,20 +135,20 @@ export default function CustomerDetails() {
                     </td>
                     <td className="p-3 font-medium">
                       <span className="block text-gray-800">
-                        {row.direction === "debit" ? "Sales Invoice" : "Cash Received"}
+                        {isSale ? "Sales Invoice" : "Payment"}
                       </span>
                       <span className="font-mono text-xs text-gray-400">
                         Ref: {row.reference_id ? row.reference_id.substring(0, 8) : "—"}
                       </span>
                     </td>
                     <td className="p-3 font-semibold text-right text-gray-800">
-                      Rs. {totalInvoice.toFixed(2)}
+                      {isSale ? `Rs. ${totalInvoice.toFixed(2)}` : "—"}
                     </td>
                     <td className="p-3 font-semibold text-right text-green-600">
                       Rs. {paidAmount.toFixed(2)}
                     </td>
                     <td className="p-3 font-bold text-right text-red-600">
-                      Rs. {remainingDue.toFixed(2)}
+                      {isSale ? `Rs. ${remainingDue.toFixed(2)}` : "—"}
                     </td>
                     <td className="p-3 text-xs italic text-gray-400">
                       {row.note || "—"}

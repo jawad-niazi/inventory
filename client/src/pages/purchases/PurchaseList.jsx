@@ -3,8 +3,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import ShopSelector from "../../components/common/ShopSelector";
 import { apiFetch } from "../../utils/api";
 import { Plus, Search, ExternalLink } from "lucide-react";
-import Modal from "../../components/common/Modal";
-import PurchaseCreate from "./PurchaseCreate";
 
 export default function PurchaseList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -12,9 +10,6 @@ export default function PurchaseList() {
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filterSupplier, setFilterSupplier] = useState("");
-
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const load = async () => {
     if (!shopId) return;
@@ -35,14 +30,6 @@ export default function PurchaseList() {
     if (shopId) setSearchParams({ shop_id: shopId });
   }, [shopId, setSearchParams]);
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-
-  const handleFormSuccess = () => {
-    closeModal();
-    load();
-  };
-
   const filtered = purchases.filter((p) =>
     (p.suppliers?.company_name || "Direct Supplier")
       .toLowerCase()
@@ -58,18 +45,18 @@ export default function PurchaseList() {
           </h2>
         </div>
         {shopId && (
-          <button
-            onClick={openModal}
+          <Link
+            to={`/purchases/new?shop_id=${shopId}`}
             className="flex items-center gap-2 rounded-full bg-brand-neon px-5 py-2.5 text-sm font-bold text-slate-900 shadow-sm hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(206,243,109,0.4)] transition-all duration-200"
           >
             <Plus className="w-4 h-4" strokeWidth={3} />
             Create Purchase Order
-          </button>
+          </Link>
         )}
       </div>
 
       <div className="mb-6">
-        <ShopSelector value={shopId} onChange={(id) => { setShopId(id); setIsModalOpen(false); }} />
+        <ShopSelector value={shopId} onChange={(id) => { setShopId(id); }} />
       </div>
 
       {shopId && (
@@ -168,20 +155,6 @@ export default function PurchaseList() {
           )}
         </>
       )}
-
-      {/* Purchase Order Form Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        title="Create Purchase Order"
-        maxWidth="max-w-5xl"
-      >
-        <PurchaseCreate 
-          shopId={shopId} 
-          onSuccess={handleFormSuccess} 
-          onCancel={closeModal} 
-        />
-      </Modal>
     </div>
   );
 }

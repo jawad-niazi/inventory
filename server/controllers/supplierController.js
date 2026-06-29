@@ -44,7 +44,31 @@ exports.getOne = async (req, res, next) => {
 
     if (ledgerErr) return next(ledgerErr)
 
-    res.json({ supplier, ledger: ledger || [] })
+    // Enrich ledger with actual purchase amounts
+    const ledgerData = ledger || []
+    const purchaseIds = ledgerData.filter(l => l.reference_type === 'purchase' && l.reference_id).map(l => l.reference_id)
+
+    if (purchaseIds.length > 0) {
+      const { data: purchases } = await supabase
+        .from('purchases')
+        .select('id, total_amount, paid_amount')
+        .in('id', purchaseIds)
+
+      if (purchases) {
+        const pMap = {}
+        purchases.forEach(p => pMap[p.id] = p)
+        ledgerData.forEach(l => {
+          if (l.reference_type === 'purchase' && pMap[l.reference_id]) {
+            const p = pMap[l.reference_id]
+            l.total_amount = Number(p.total_amount || 0)
+            l.paid_amount = Number(p.paid_amount || 0)
+            l.due_amount = Math.max(0, l.total_amount - l.paid_amount)
+          }
+        })
+      }
+    }
+
+    res.json({ supplier, ledger: ledgerData })
   } catch (err) {
     next(err)
   }
