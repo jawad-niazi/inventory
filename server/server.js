@@ -10,9 +10,21 @@ const authMiddleware = require('./middleware/auth')
 
 const app = express()
 
-app.use(cors())
+// 🌐 CORS configuration: Apne Vercel frontend link ko allow karo
+app.use(cors({
+  origin: [
+    'https://your-vercel-project-name.vercel.app', // 👈 YAHAN APNA VERCEL WALI LIVE WEBSITE KA URL DAALO
+    'http://localhost:5173',                       // Vite local testing ke liye
+    'http://localhost:3000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(morgan('dev'))
 app.use(express.json())
+
+
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
