@@ -15,6 +15,8 @@ export default function Login() {
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [forgotError, setForgotError] = useState(null);
 
+  const [selectedShop, setSelectedShop] = useState(null);
+
   const { signin } = useAuth();
   const navigate = useNavigate();
 
@@ -75,9 +77,56 @@ export default function Login() {
         </div>
 
         <div className="rounded-2xl border border-slate-700/60 bg-slate-800/80 backdrop-blur-sm p-8 shadow-2xl">
-          {!showForgot ? (
+          {!selectedShop ? (
+            /* ── Shop Selection Panel ── */
+            <div className="space-y-6">
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-bold text-white">Select Your Shop</h2>
+                <p className="text-slate-400 text-sm mt-1">Choose a shop to continue</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setSelectedShop("Shop 1")}
+                  className="flex flex-col items-center justify-center p-6 rounded-xl border border-slate-600 bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500/50 transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-full bg-slate-600 group-hover:bg-emerald-500/20 flex items-center justify-center mb-3 transition-colors">
+                    <svg className="w-6 h-6 text-slate-300 group-hover:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <span className="text-white font-medium">Shop 1</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedShop("Shop 2")}
+                  className="flex flex-col items-center justify-center p-6 rounded-xl border border-slate-600 bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500/50 transition-all group"
+                >
+                  <div className="w-12 h-12 rounded-full bg-slate-600 group-hover:bg-emerald-500/20 flex items-center justify-center mb-3 transition-colors">
+                    <svg className="w-6 h-6 text-slate-300 group-hover:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                  </div>
+                  <span className="text-white font-medium">Shop 2</span>
+                </button>
+              </div>
+            </div>
+          ) : !showForgot ? (
             /* ── Login Form ── */
             <form onSubmit={handleLogin} className="space-y-5">
+              <div className="flex items-center gap-3 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedShop(null)}
+                  className="text-slate-400 hover:text-white transition-colors"
+                  aria-label="Back"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <h2 className="text-lg font-semibold text-white">Login to {selectedShop}</h2>
+              </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-300">
                   Email address
