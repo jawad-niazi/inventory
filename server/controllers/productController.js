@@ -1,4 +1,5 @@
 const supabase = require('../services/supabaseClient')
+
 const { resolveShopId, assertShopAccess } = require('../utils/shopAccess')
 
 const PRODUCT_BUCKET = 'product-images'
@@ -327,52 +328,87 @@ exports.remove = async (req, res, next) => {
 }
 
 exports.uploadImage = async (req, res, next) => {
+  const fs = require('fs');
   try {
-    const { id } = req.params
-    if (!req.file) return res.status(400).json({ error: 'No image file provided' })
+    const { id } = req.params;
+
+    // Database Fallback: no file provided
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
 
     const { data: product, error: fetchError } = await supabase
       .from('products')
       .select('shop_id, image_url')
       .eq('id', id)
-      .single()
+      .single();
 
-    if (fetchError) return next(fetchError)
-    if (!assertShopAccess(req.appUser, product.shop_id, res)) return
-
-    const ext = req.file.originalname.split('.').pop() || 'jpg'
-    const filePath = `${product.shop_id}/${id}.${ext}`
-
-    const { error: uploadError } = await supabase.storage
-      .from(PRODUCT_BUCKET)
-      .upload(filePath, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: true,
-      })
-
-    if (uploadError) return next(uploadError)
-
-    const { data: urlData } = supabase.storage
-      .from(PRODUCT_BUCKET)
-      .getPublicUrl(filePath)
-
-    const image_url = urlData.publicUrl
-
-    if (product.image_url && product.image_url !== image_url) {
-      const oldPath = product.image_url.split(`${PRODUCT_BUCKET}/`)[1]
-      if (oldPath) await supabase.storage.from(PRODUCT_BUCKET).remove([oldPath])
+    if (fetchError) {
+      // Safely handle missing product without crashing
+      return res.status(404).json({ error: 'Product not found or database error' });
     }
 
-    const { data, error } = await supabase
-      .from('products')
-      .update({ image_url, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select('*, categories(id, name)')
-      .single()
+    if (!assertShopAccess(req.appUser, product.shop_id, res)) {
+      return;
+    }
 
-    if (error) return next(error)
-    res.json({ product: data })
+    let image_url;
+
+    try {
+      if (req.file.path) {
+        // Direct Cloudinary Upload (Disk storage)
+        const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+          folder: "product-images",
+          public_id: `${id}`, // Overwrites the existing image automatically in Cloudinary
+          overwrite: true
+        });
+        image_url = uploadResult.secure_url;
+      } else if (req.file.buffer) {
+        // Fallback: Memory storage (in case multer wasn't updated)
+        const uploadResult = await uploadToCloudinary(req.file.buffer, {
+          folder: "product-images",
+          public_id: `${id}`,
+          overwrite: true,
+          resource_type: 'image'
+        });
+        image_url = uploadResult.secure_url;
+      } else {
+        return res.status(400).json({ error: 'Invalid file upload format' });
+      }
+
+      // Database Update: Save new secure_url
+      const { data, error } = await supabase
+        .from('products')
+        .update({ image_url, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select('*, categories(id, name)')
+        .single();
+
+      if (error) {
+        return res.status(500).json({ error: 'Failed to update product with image url' });
+      }
+
+      // Return 200 with the updated product object
+      return res.status(200).json({ product: data });
+    } finally {
+      // Local File Cleanup
+      if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkErr) {
+          console.error("Failed to delete temp file:", unlinkErr);
+        }
+      }
+    }
   } catch (err) {
-    next(err)
+    const fs = require('fs');
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkErr) {
+        // Ignore unlink errors in catch block
+      }
+    }
+    next(err);
   }
-}
+};

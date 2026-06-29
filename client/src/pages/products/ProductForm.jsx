@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { apiFetch } from "../../utils/api";
+import { apiFetch, getToken } from "../../utils/api";
 
 const inputClass =
   "w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
@@ -75,8 +75,12 @@ export default function ProductForm() {
     try {
       // apiFetch ko bypass karke direct browser fetch use karein taake headers block na hon
       console.log("[ProductForm] uploading image for productId=", productId);
+      const token = await getToken();
       const response = await fetch(`/api/products/${productId}/image`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: fd,
       });
 
