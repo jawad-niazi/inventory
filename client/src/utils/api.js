@@ -1,9 +1,9 @@
 import { supabase } from "../services/supabase";
 
 // 🌐 Jab live chalega toh Render ka URL pakray ga, local par empty string
-const BASE_URL = import.meta.env.PROD 
-  ? "https://inventory-4zxb.onrender.com" 
-  : "";
+const BASE_URL = import.meta.env.VITE_API_URL;
+
+console.log("BASE_URL:", BASE_URL); // Debug ke liye
 
 export async function getToken() {
   const session = await supabase.auth.getSession();
