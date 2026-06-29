@@ -1,5 +1,9 @@
 import { supabase } from "../services/supabase";
 
+const BASE_URL = import.meta.env.PROD 
+  ? "https://inventory-4zxb.onrender.com" 
+  : "";
+
 export async function getToken() {
   const session = await supabase.auth.getSession();
   return session.data.session?.access_token;
