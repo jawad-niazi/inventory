@@ -6,6 +6,7 @@ const { listCustomers, createCustomer, updateCustomer } = require('../validation
 router.use(loadProfile)
 
 router.get('/', listCustomers, ctrl.list)
+router.get('/:id', ctrl.getOne)
 router.post('/', createCustomer, ctrl.create)
 router.put('/:id', updateCustomer, ctrl.update)
 router.delete('/:id', ctrl.remove)

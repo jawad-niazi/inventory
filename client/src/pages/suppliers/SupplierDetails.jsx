@@ -106,40 +106,53 @@ export default function SupplierDetails() {
               </tr>
             </thead>
             <tbody className="text-gray-600 divide-y">
-              {ledger.map((row) => (
-                <tr key={row.id} className="transition hover:bg-gray-50">
-                  <td className="p-3 text-xs">
-                    {new Date(row.created_at).toLocaleString()}
-                  </td>
-                  <td className="p-3 font-medium">
-                    <span className="block text-gray-800">
-                      {row.direction === "in" ? "Purchase" : "Payment"}
-                    </span>
-                    <span className="font-mono text-xs text-gray-400">
-                      ID:{" "}
-                      {row.reference_id
-                        ? row.reference_id.substring(0, 8)
-                        : "—"}
-                    </span>
-                  </td>
-                  <td className="p-3 font-semibold text-right text-gray-800">
-                    Rs. {Number(row.total_amount || row.amount || 0).toFixed(2)}
-                  </td>
-                  <td className="p-3 font-semibold text-right text-green-600">
-                    Rs.{" "}
-                    {Number(
-                      row.paid_amount ||
-                        (row.direction === "out" ? row.amount : 0),
-                    ).toFixed(2)}
-                  </td>
-                  <td className="p-3 font-bold text-right text-red-600">
-                    Rs. {Number(row.due_amount || 0).toFixed(2)}
-                  </td>
-                  <td className="p-3 text-xs italic text-gray-400">
-                    {row.note || "—"}
-                  </td>
-                </tr>
-              ))}
+              {ledger.map((row) => {
+                const totalInvoice = Number(
+                  row.total_amount ||
+                  row.grand_total ||
+                  (row.direction === "in" ? row.amount : 0) ||
+                  0,
+                );
+                const paidAmount = Number(
+                  row.paid_amount ||
+                  row.paid ||
+                  (row.direction === "out" ? row.amount : 0) ||
+                  0,
+                );
+                const remainingDue =
+                  row.remaining_due ?? row.due_amount ?? (totalInvoice - paidAmount);
+
+                return (
+                  <tr key={row.id} className="transition hover:bg-gray-50">
+                    <td className="p-3 text-xs">
+                      {new Date(row.created_at).toLocaleString()}
+                    </td>
+                    <td className="p-3 font-medium">
+                      <span className="block text-gray-800">
+                        {row.direction === "in" ? "Purchase" : "Payment"}
+                      </span>
+                      <span className="font-mono text-xs text-gray-400">
+                        ID: {row.reference_id ? row.reference_id.substring(0, 8) : "—"}
+                      </span>
+                    </td>
+                    {/* Total Invoice */}
+                    <td className="p-3 font-semibold text-right text-gray-800">
+                      Rs. {Number(row.total_amount || row.amount || 0).toFixed(2)}
+                    </td>
+                    {/* Paid Amount */}
+                    <td className="p-3 font-semibold text-right text-green-600">
+                      Rs. {Number(row.paid_amount || 0).toFixed(2)}
+                    </td>
+                    {/* Remaining Due */}
+                    <td className="p-3 font-bold text-right text-red-600">
+                      Rs. {Number(row.due_amount || row.remaining_due || 0).toFixed(2)}
+                    </td>
+                    <td className="p-3 text-xs italic text-gray-400">
+                      {row.note || "—"}
+                    </td>
+                  </tr>
+                );
+              })}
               {ledger.length === 0 && (
                 <tr>
                   <td

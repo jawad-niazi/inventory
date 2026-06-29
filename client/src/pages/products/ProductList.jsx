@@ -113,7 +113,7 @@ export default function ProductList() {
                               <img
                                 src={p.image_url}
                                 alt=""
-                                className="h-10 w-10 rounded object-cover"
+                                className="h-10 w-10 rounded object-contain bg-gray-50"
                               />
                             ) : (
                               <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100 text-xs text-gray-400">

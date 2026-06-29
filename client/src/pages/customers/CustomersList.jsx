@@ -169,9 +169,7 @@ export default function CustomersList() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() =>
-                                navigate(
-                                  `/customers/${customer.id}?shop_id=${shopId}`,
-                                )
+                                navigate(`/customers/${customer.id}?shop_id=${shopId}`)
                               }
                               className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition-all duration-150"
                             >

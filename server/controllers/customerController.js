@@ -19,6 +19,42 @@ exports.list = async (req, res, next) => {
   }
 }
 
+exports.getOne = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const shopId = resolveShopId(req)
+    if (!assertShopAccess(req.appUser, shopId, res)) return
+
+    const { data: customer, error: supErr } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (supErr) {
+      if (supErr.code === 'PGRST116') {
+         return res.status(404).json({ error: 'Customer not found' })
+      }
+      return next(supErr)
+    }
+    if (!assertShopAccess(req.appUser, customer.shop_id, res)) return
+
+    // Fetch ledger transactions for this customer
+    const { data: ledger, error: ledgerErr } = await supabase
+      .from('ledger_transactions')
+      .select('*')
+      .eq('shop_id', customer.shop_id)
+      .eq('party_type', 'customer')
+      .eq('party_id', id)
+      .order('created_at', { ascending: false })
+
+    if (ledgerErr) return next(ledgerErr)
+
+    res.json({ customer, ledger: ledger || [] })
+  } catch (err) {
+    next(err)
+  }
+}
+
 exports.create = async (req, res, next) => {
   try {
     const shopId = resolveShopId(req)
