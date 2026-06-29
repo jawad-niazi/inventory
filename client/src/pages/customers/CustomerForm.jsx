@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../../utils/api";
 
 const inputClass =
-  "w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
+  "w-full rounded-2xl border-0 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon focus:bg-white transition-all";
 
-export default function CustomerForm() {
-  const { id } = useParams();
-  const [searchParams] = useSearchParams();
-  const shopId = searchParams.get("shop_id") || "";
-  const navigate = useNavigate();
-
-  const [loading, setLoading] = useState(!!id);
+export default function CustomerForm({ customerId, shopId, onSuccess, onCancel }) {
+  const [loading, setLoading] = useState(!!customerId);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [form, setForm] = useState({
@@ -22,12 +16,12 @@ export default function CustomerForm() {
   });
 
   useEffect(() => {
-    if (!id) return;
+    if (!customerId) return;
     const loadCustomer = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await apiFetch(`/api/customers/${id}?shop_id=${shopId}`);
+        const res = await apiFetch(`/api/customers/${customerId}?shop_id=${shopId}`);
         if (res.ok) {
           const body = await res.json();
           const c = body.customer;
@@ -52,7 +46,7 @@ export default function CustomerForm() {
       }
     };
     loadCustomer();
-  }, [id, shopId]);
+  }, [customerId, shopId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -63,8 +57,8 @@ export default function CustomerForm() {
     }
 
     setSubmitting(true);
-    const url = id ? `/api/customers/${id}` : "/api/customers";
-    const method = id ? "PUT" : "POST";
+    const url = customerId ? `/api/customers/${customerId}` : "/api/customers";
+    const method = customerId ? "PUT" : "POST";
 
     const payload = {
       name: form.name,
@@ -72,12 +66,11 @@ export default function CustomerForm() {
       address: form.address,
     };
 
-    // Only include current_balance on create (initial balance seed)
-    if (!id && form.current_balance !== "") {
+    if (!customerId && form.current_balance !== "") {
       payload.current_balance = Number(form.current_balance) || 0;
     }
 
-    if (!id) {
+    if (!customerId) {
       payload.shop_id = shopId;
     }
 
@@ -88,7 +81,7 @@ export default function CustomerForm() {
       });
       const body = await res.json();
       if (res.ok) {
-        navigate(`/customers?shop_id=${shopId}`);
+        if (onSuccess) onSuccess();
       } else {
         setError(body.error || "Failed to save customer");
       }
@@ -100,27 +93,20 @@ export default function CustomerForm() {
   };
 
   if (loading) {
-    return <div className="py-4 text-gray-600">Loading customer data...</div>;
+    return <div className="py-4 text-slate-500 font-medium">Loading customer data...</div>;
   }
 
   return (
-    <div className="max-w-xl">
-      <h2 className="mb-6 text-2xl font-bold text-gray-900">
-        {id ? "Edit Customer" : "Add New Customer"}
-      </h2>
-
+    <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
+        <div className="rounded-2xl bg-red-50 p-4 text-sm font-medium text-red-700 border border-red-200">
           {error}
         </div>
       )}
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-      >
+      <div className="space-y-6">
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+          <label className="block mb-2 text-sm font-bold text-slate-700">
             Customer Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -133,7 +119,7 @@ export default function CustomerForm() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+          <label className="block mb-2 text-sm font-bold text-slate-700">
             Phone
           </label>
           <input
@@ -145,7 +131,7 @@ export default function CustomerForm() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+          <label className="block mb-2 text-sm font-bold text-slate-700">
             Address
           </label>
           <textarea
@@ -156,10 +142,9 @@ export default function CustomerForm() {
           />
         </div>
 
-        {/* Initial balance only visible on create */}
-        {!id && (
+        {!customerId && (
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+            <label className="block mb-2 text-sm font-bold text-slate-700">
               Opening Balance (Rs.)
             </label>
             <input
@@ -173,29 +158,29 @@ export default function CustomerForm() {
               className={inputClass}
               placeholder="0.00 — leave blank for zero"
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-2 text-xs font-medium text-slate-400">
               Enter any existing Udhaar balance this customer already owes you.
             </p>
           </div>
         )}
+      </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-          <button
-            type="button"
-            onClick={() => navigate(`/customers?shop_id=${shopId}`)}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm"
-          >
-            {submitting ? "Saving..." : "Save Customer"}
-          </button>
-        </div>
-      </form>
-    </div>
+      <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-100">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-6 py-3 text-sm font-bold text-slate-600 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="px-6 py-3 text-sm font-bold text-slate-900 bg-brand-neon rounded-full hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(206,243,109,0.4)] disabled:opacity-50 transition-all duration-200"
+        >
+          {submitting ? "Saving..." : "Save Customer"}
+        </button>
+      </div>
+    </form>
   );
 }

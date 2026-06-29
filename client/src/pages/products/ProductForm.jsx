@@ -1,18 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiFetch, getToken } from "../../utils/api";
 
 const inputClass =
-  "w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+  "w-full rounded-2xl border-0 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon focus:bg-white transition-all";
 
-export default function ProductForm() {
-  const { id } = useParams();
-  const [searchParams] = useSearchParams();
-  const shopId = searchParams.get("shop_id") || "";
-  const navigate = useNavigate();
-
+export default function ProductForm({ productId, shopId, onSuccess, onCancel }) {
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(!!id);
+  const [loading, setLoading] = useState(!!productId);
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [form, setForm] = useState({
@@ -35,10 +29,10 @@ export default function ProductForm() {
   }, [shopId]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!productId) return;
     const load = async () => {
       setLoading(true);
-      const res = await apiFetch(`/api/products/${id}`);
+      const res = await apiFetch(`/api/products/${productId}`);
       if (res.ok) {
         const body = await res.json();
         const p = body.product;
@@ -55,7 +49,7 @@ export default function ProductForm() {
       setLoading(false);
     };
     load();
-  }, [id]);
+  }, [productId]);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -67,16 +61,13 @@ export default function ProductForm() {
     setPreview(URL.createObjectURL(file));
   };
 
-  const uploadImage = async (productId) => {
+  const uploadImage = async (id) => {
     if (!imageFile) return;
     const fd = new FormData();
-    fd.append("image", imageFile); // Key name matching backend upload.single('image')
-
+    fd.append("image", imageFile); 
     try {
-      // apiFetch ko bypass karke direct browser fetch use karein taake headers block na hon
-      console.log("[ProductForm] uploading image for productId=", productId);
       const token = await getToken();
-      const response = await fetch(`/api/products/${productId}/image`, {
+      const response = await fetch(`/api/products/${id}/image`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -84,24 +75,9 @@ export default function ProductForm() {
         body: fd,
       });
 
-      console.log(
-        "[ProductForm] image upload response status=",
-        response.status,
-      );
       if (!response.ok) {
-        const txt = await response.text().catch(() => null);
-        console.error(
-          "[ProductForm] Image upload failed status:",
-          response.status,
-          txt,
-        );
-        // throw so caller knows upload failed
         throw new Error(`Image upload failed: ${response.status}`);
       }
-
-      console.log(
-        "[ProductForm] Image uploaded successfully to backend/cloudinary",
-      );
       return true;
     } catch (err) {
       console.error("Error uploading image:", err);
@@ -122,66 +98,35 @@ export default function ProductForm() {
       price: parseFloat(form.price) || 0,
       category_id: form.category_id || null,
       low_stock_threshold: parseInt(form.low_stock_threshold, 10) || 0,
-      // status defaults to 'active' on the backend — removed from form
     };
 
-    const method = id ? "PUT" : "POST";
-    const url = id ? `/api/products/${id}` : "/api/products";
+    const method = productId ? "PUT" : "POST";
+    const url = productId ? `/api/products/${productId}` : "/api/products";
     try {
-      console.log(
-        "[ProductForm] Sending product payload to",
-        url,
-        "method=",
-        method,
-        "payload=",
-        payload,
-      );
       const res = await apiFetch(url, {
         method,
         body: JSON.stringify(payload),
       });
 
-      console.log("[ProductForm] Product save response status=", res.status);
       const body = await (res.ok ? res.json() : res.json().catch(() => ({})));
 
       if (!res.ok) {
-        console.error(
-          "[ProductForm] Failed to save product:",
-          body.error || body || res.status,
-        );
         alert("Failed to save product: " + (body.error || res.status));
         return;
       }
 
-      console.log("[ProductForm] Product saved successfully", body);
-      const productId = id || body.product?.id;
-      if (productId && imageFile) {
+      const pId = productId || body.product?.id;
+      if (pId && imageFile) {
         try {
-          console.log(
-            "[ProductForm] Starting image upload for productId=",
-            productId,
-          );
-          await uploadImage(productId);
-          console.log(
-            "[ProductForm] Image upload finished for productId=",
-            productId,
-          );
+          await uploadImage(pId);
         } catch (uploadErr) {
-          console.error(
-            "[ProductForm] Image upload failed after product save:",
-            uploadErr,
-          );
-          alert(
-            "Product saved but image upload failed. You can retry uploading the image from product details.",
-          );
-          // still navigate, because product exists — user can retry image upload
-          navigate(`/products?shop_id=${shopId}`);
+          alert("Product saved but image upload failed.");
+          if (onSuccess) onSuccess();
           return;
         }
       }
 
-      // Only navigate after both product save and image upload (if any) have completed
-      navigate(`/products?shop_id=${shopId}`);
+      if (onSuccess) onSuccess();
     } catch (err) {
       console.error("[ProductForm] Unexpected error during save:", err);
       alert("Unexpected error saving product. Check console for details.");
@@ -189,170 +134,153 @@ export default function ProductForm() {
   };
 
   if (!shopId) {
-    return (
-      <p className="text-gray-600">
-        Missing shop. Go back to{" "}
-        <button
-          type="button"
-          onClick={() => navigate("/products")}
-          className="text-indigo-600 hover:underline"
-        >
-          Products
-        </button>{" "}
-        and select a shop.
-      </p>
-    );
+    return <p className="text-slate-500 font-medium">Missing shop ID.</p>;
+  }
+
+  if (loading) {
+    return <p className="text-slate-500 font-medium">Loading product details...</p>;
   }
 
   return (
-    <div className="max-w-lg">
-      <h2 className="mb-6 text-2xl font-bold text-gray-900">
-        {id ? "Edit Product" : "Add Product"}
-      </h2>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        {/* Name */}
+        <div className="sm:col-span-2">
+          <label className="block mb-2 text-sm font-bold text-slate-700">
+            Product Name *
+          </label>
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            required
+            placeholder="e.g. Minimalist Desk Lamp"
+            className={inputClass}
+          />
+        </div>
 
-      {loading ? (
-        <p className="text-gray-600">Loading...</p>
-      ) : (
-        <form
-          onSubmit={handleSubmit}
-          className="p-6 space-y-4 bg-white border border-gray-200 rounded-lg shadow-sm"
-        >
-          {/* Name */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
-              Name *
-            </label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              className={inputClass}
-            />
-          </div>
+        {/* Product Code */}
+        <div>
+          <label className="block mb-2 text-sm font-bold text-slate-700">
+            Product Code
+          </label>
+          <input
+            name="product_code"
+            value={form.product_code}
+            onChange={handleChange}
+            placeholder="e.g. PC-001"
+            className={inputClass}
+          />
+        </div>
 
-          {/* Product Code (was SKU) */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
-              Product Code
-            </label>
-            <input
-              name="product_code"
-              value={form.product_code}
-              onChange={handleChange}
-              placeholder="e.g. PC-001"
-              className={inputClass}
-            />
-          </div>
+        {/* Model Name */}
+        <div>
+          <label className="block mb-2 text-sm font-bold text-slate-700">
+            Model Name
+          </label>
+          <input
+            name="model_name"
+            value={form.model_name}
+            onChange={handleChange}
+            placeholder="e.g. Model X"
+            className={inputClass}
+          />
+        </div>
 
-          {/* Model Name */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
-              Model Name
-              <span className="ml-1 text-xs text-gray-400">
-                (e.g. Galaxy A35, iPhone 15)
-              </span>
-            </label>
-            <input
-              name="model_name"
-              value={form.model_name}
-              onChange={handleChange}
-              placeholder="e.g. Galaxy A35"
-              className={inputClass}
-            />
-          </div>
+        {/* Price */}
+        <div>
+          <label className="block mb-2 text-sm font-bold text-slate-700">
+            Sale Price (Rs.)
+          </label>
+          <input
+            name="price"
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.price}
+            onChange={handleChange}
+            className={inputClass}
+          />
+        </div>
 
-          {/* Price + Low stock */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block mb-1 text-sm font-medium text-gray-700">
-                Sale Price (Rs.)
-              </label>
-              <input
-                name="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.price}
-                onChange={handleChange}
-                className={inputClass}
+        {/* Low stock */}
+        <div>
+          <label className="block mb-2 text-sm font-bold text-slate-700">
+            Low Stock Threshold
+          </label>
+          <input
+            name="low_stock_threshold"
+            type="number"
+            min="0"
+            value={form.low_stock_threshold}
+            onChange={handleChange}
+            className={inputClass}
+          />
+        </div>
+
+        {/* Category */}
+        <div className="sm:col-span-2">
+          <label className="block mb-2 text-sm font-bold text-slate-700">
+            Category
+          </label>
+          <select
+            name="category_id"
+            value={form.category_id}
+            onChange={handleChange}
+            className={inputClass}
+          >
+            <option value="">None</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Product Image */}
+        <div className="sm:col-span-2">
+          <label className="block mb-2 text-sm font-bold text-slate-700">
+            Product Image
+          </label>
+          <div className="flex items-center gap-6">
+            {preview ? (
+              <img
+                src={preview}
+                alt="Preview"
+                className="object-cover w-24 h-24 rounded-2xl ring-1 ring-slate-200 shadow-sm"
               />
-            </div>
-            <div>
-              <label className="block mb-1 text-sm font-medium text-gray-700">
-                Low stock alert
-              </label>
-              <input
-                name="low_stock_threshold"
-                type="number"
-                min="0"
-                value={form.low_stock_threshold}
-                onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
-              Category
-            </label>
-            <select
-              name="category_id"
-              value={form.category_id}
-              onChange={handleChange}
-              className={inputClass}
-            >
-              <option value="">None</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Initial Quantity removed: stock starts at 0 and is managed via Purchases */}
-
-          {/* Product Image */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-700">
-              Product image
-            </label>
+            ) : (
+              <div className="flex items-center justify-center w-24 h-24 rounded-2xl bg-slate-50 ring-1 ring-slate-200 shadow-sm text-slate-400 text-xs font-medium">
+                No Image
+              </div>
+            )}
             <input
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              className="text-sm"
+              className="text-sm font-medium text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-brand-neon file:text-slate-900 hover:file:bg-brand-neon/80 transition-colors cursor-pointer"
             />
-            {preview && (
-              <img
-                src={preview}
-                alt="Preview"
-                className="object-cover w-24 h-24 mt-2 rounded"
-              />
-            )}
           </div>
+        </div>
+      </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(`/products?shop_id=${shopId}`)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-    </div>
+      {/* Actions */}
+      <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-100">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-6 py-3 text-sm font-bold text-slate-600 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="px-6 py-3 text-sm font-bold text-slate-900 bg-brand-neon rounded-full hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(206,243,109,0.4)] transition-all duration-200"
+        >
+          {productId ? "Save Changes" : "Add Product"}
+        </button>
+      </div>
+    </form>
   );
 }

@@ -2,11 +2,27 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { APP_NAME } from "../../constants";
+import {
+  LayoutDashboard,
+  Box,
+  Tags,
+  Warehouse,
+  TrendingUp,
+  FileText,
+  ShoppingCart,
+  Truck,
+  Users,
+  ArrowRightLeft,
+  Receipt,
+  Store,
+  ArrowUpRight
+} from "lucide-react";
 
 const navLinkClass = (active) =>
-  `block rounded-md px-3 py-2 text-sm font-medium transition-colors ${active
-    ? "bg-emerald-600 text-white"
-    : "text-slate-300 hover:bg-slate-700 hover:text-white"
+  `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
+    active
+      ? "bg-brand-neon text-slate-900 shadow-[0_0_15px_rgba(206,243,109,0.3)]"
+      : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
   }`;
 
 export default function Sidebar() {
@@ -15,28 +31,28 @@ export default function Sidebar() {
 
   if (loading || profileLoading) {
     return (
-      <aside className="w-56 shrink-0 bg-slate-900 p-4 text-slate-400 border-r border-slate-800">
+      <aside className="w-[260px] shrink-0 bg-sidebar-bg p-4 text-slate-400 border-r border-slate-800">
         Loading...
       </aside>
     );
   }
 
   const links = [
-    { to: "/dashboard", label: "Dashboard" },
-    { to: "/products", label: "Products" },
-    { to: "/categories", label: "Categories" },
-    { to: "/inventory", label: "Inventory" },
-    { to: "/sales", label: "Sales" },
-    { to: "/quotations", label: "Quotations" },
-    { to: "/purchases", label: "Purchases" },
-    { to: "/suppliers", label: "Suppliers" },
-    { to: "/customers", label: "Customers" },
-    { to: "/transfers", label: "Transfers" },
-    { to: "/invoices", label: "Invoices" },
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/products", label: "Products", icon: Box },
+    { to: "/categories", label: "Categories", icon: Tags },
+    { to: "/inventory", label: "Inventory", icon: Warehouse },
+    { to: "/sales", label: "Sales", icon: TrendingUp },
+    { to: "/quotations", label: "Quotations", icon: FileText },
+    { to: "/purchases", label: "Purchases", icon: ShoppingCart },
+    { to: "/suppliers", label: "Suppliers", icon: Truck },
+    { to: "/customers", label: "Customers", icon: Users },
+    { to: "/transfers", label: "Transfers", icon: ArrowRightLeft },
+    { to: "/invoices", label: "Invoices", icon: Receipt },
   ];
 
   if (role === "super_admin") {
-    links.push({ to: "/shops", label: "Shops" });
+    links.push({ to: "/shops", label: "Shops", icon: Store });
   }
 
   const isActive = (to) => {
@@ -45,15 +61,20 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col bg-slate-900 border-r border-slate-800">
-      <div className="border-b border-slate-800 px-4 py-5">
-        <p className="text-sm font-bold uppercase tracking-wider text-emerald-500">
+    <aside className="flex w-[260px] shrink-0 flex-col bg-sidebar-bg rounded-tr-4xl rounded-br-4xl my-4 ml-4 shadow-xl overflow-hidden relative">
+      <div className="px-6 py-8 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-brand-neon flex items-center justify-center text-slate-900 font-bold text-lg">
+          {APP_NAME.charAt(0)}
+        </div>
+        <p className="text-xl font-bold text-white tracking-tight">
           {APP_NAME}
         </p>
       </div>
-      <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
-        {links.map(({ to, label }) => (
+      
+      <nav className="flex-1 space-y-2 px-4 overflow-y-auto scrollbar-hide pb-4">
+        {links.map(({ to, label, icon: Icon }) => (
           <Link key={to} to={to} className={navLinkClass(isActive(to))}>
+            <Icon className="w-5 h-5" strokeWidth={isActive(to) ? 2.5 : 2} />
             {label}
           </Link>
         ))}

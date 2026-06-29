@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../../utils/api";
 
 const inputClass =
-  "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
+  "w-full rounded-2xl border-0 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon focus:bg-white transition-all";
 
-export default function QuotationCreate() {
-  const [searchParams] = useSearchParams();
-  const shopId = searchParams.get("shop_id") || "";
-  const navigate = useNavigate();
-
+export default function QuotationCreate({ shopId, onSuccess, onCancel }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const [customerName, setCustomerName] = useState("");
   const [notes, setNotes] = useState("");
@@ -77,8 +73,10 @@ export default function QuotationCreate() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+
     if (items.length === 0) {
-      alert("Please add at least one item.");
+      setError("Please add at least one item.");
       return;
     }
     setSubmitting(true);
@@ -103,135 +101,124 @@ export default function QuotationCreate() {
 
     if (res.ok) {
       const body = await res.json();
-      navigate(`/quotations/${body.quotation.id}?shop_id=${shopId}`);
+      if (onSuccess) onSuccess(body.quotation.id);
     } else {
       const body = await res.json();
-      alert(body.error || "Failed to create quotation");
+      setError(body.error || "Failed to create quotation");
       setSubmitting(false);
     }
   };
 
   if (!shopId) {
     return (
-      <div className="p-6 text-center text-slate-600">
+      <div className="p-6 text-center text-slate-500 font-medium">
         Please select a shop first.
       </div>
     );
   }
 
+  if (loading) {
+    return <p className="text-slate-500 font-medium py-4">Loading quotation data...</p>;
+  }
+
   return (
-    <div className="max-w-4xl space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">New Quotation</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Kacha Bill — stock will NOT be deducted
-          </p>
+    <div className="space-y-6">
+      {error && (
+        <div className="rounded-2xl bg-red-50 p-4 text-sm font-medium text-red-700 border border-red-200">
+          {error}
         </div>
-        <button
-          onClick={() => navigate(`/quotations?shop_id=${shopId}`)}
-          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
+      )}
 
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Header info */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Customer Name
-              </label>
-              <input
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="e.g. Ahmed Traders"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Valid Until
-              </label>
-              <input
-                type="date"
-                value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                Notes / Remarks
-              </label>
-              <input
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Optional notes"
-                className={inputClass}
-              />
-            </div>
-          </div>
-
-          {/* Items */}
-          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-            <h3 className="font-semibold text-slate-900 border-b border-slate-100 pb-2">
-              Quotation Items
-            </h3>
-
-            <select
-              onChange={(e) => {
-                addProductRow(e.target.value);
-                e.target.value = "";
-              }}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">
+              Customer Name
+            </label>
+            <input
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder="e.g. Ahmed Traders"
               className={inputClass}
-            >
-              <option value="">— Select a product to add —</option>
-              {(products || []).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                  {p.model_name ? ` · ${p.model_name}` : ""}
-                  {p.sku ? ` (${p.sku})` : ""}
-                </option>
-              ))}
-            </select>
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">
+              Valid Until
+            </label>
+            <input
+              type="date"
+              value={validUntil}
+              onChange={(e) => setValidUntil(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700">
+              Notes / Remarks
+            </label>
+            <input
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Optional notes"
+              className={inputClass}
+            />
+          </div>
+        </div>
 
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50">
+        <div className="rounded-4xl border border-slate-100 bg-slate-50/50 p-6 space-y-4">
+          <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4">
+            Quotation Items
+          </h3>
+
+          <select
+            onChange={(e) => {
+              addProductRow(e.target.value);
+              e.target.value = "";
+            }}
+            className={inputClass}
+          >
+            <option value="">— Select a product to add —</option>
+            {(products || []).map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+                {p.model_name ? ` · ${p.model_name}` : ""}
+                {p.sku ? ` (${p.sku})` : ""}
+              </option>
+            ))}
+          </select>
+
+          <div className="overflow-x-auto mt-4">
+            <table className="w-full text-left border-collapse">
+              <thead className="border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-2 text-left font-semibold text-slate-700">
+                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                     Product / Model
                   </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-700 w-36">
-                    Unit Price (Rs.)
+                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 text-right w-36">
+                    Unit Price
                   </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-700 w-28">
+                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 text-right w-32">
                     Qty
                   </th>
-                  <th className="px-4 py-2 text-right font-semibold text-slate-700 w-36">
+                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 text-right w-36">
                     Subtotal
                   </th>
-                  <th className="w-12" />
+                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-400 text-center w-16" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {items.map((item, idx) => (
-                  <tr key={`${item.product_id}-${idx}`}>
-                    <td className="px-4 py-2">
-                      <p className="font-medium text-slate-900">{item.name}</p>
+                  <tr key={`${item.product_id}-${idx}`} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="font-bold text-slate-900">{item.name}</p>
                       {item.model_name && (
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs font-medium text-slate-500">
                           {item.model_name}
                         </p>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-3 text-right">
                       <input
                         type="number"
                         step="0.01"
@@ -245,36 +232,39 @@ export default function QuotationCreate() {
                           )
                         }
                         required
-                        className="rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs w-28 focus:outline-none focus:border-emerald-500"
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-right text-sm w-32 focus:outline-none focus:ring-2 focus:ring-brand-neon"
                       />
                     </td>
-                    <td className="px-4 py-2 text-right">
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateItem(
-                            idx,
-                            "quantity",
-                            parseInt(e.target.value, 10) || 1,
-                          )
-                        }
-                        required
-                        className="rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs w-20 focus:outline-none focus:border-emerald-500"
-                      />
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => updateItem(idx, "quantity", Math.max(1, item.quantity - 1))}
+                          className="h-7 w-7 flex items-center justify-center rounded-full border border-slate-200 bg-white hover:bg-slate-100 font-bold text-slate-600 transition-colors"
+                        >
+                          -
+                        </button>
+                        <span className="text-sm font-bold w-8 text-center text-slate-900">{item.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => updateItem(idx, "quantity", item.quantity + 1)}
+                          className="h-7 w-7 flex items-center justify-center rounded-full border border-slate-200 bg-white hover:bg-slate-100 font-bold text-slate-600 transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
                     </td>
-                    <td className="px-4 py-2 text-right font-bold text-slate-900 font-mono">
+                    <td className="px-4 py-3 text-right font-bold text-slate-900 font-mono">
                       Rs. {(item.quantity * Number(item.unit_price)).toFixed(2)}
                     </td>
-                    <td className="px-4 py-2 text-center">
+                    <td className="px-4 py-3 text-center">
                       <button
                         type="button"
                         onClick={() => removeItem(idx)}
-                        className="text-red-500 hover:text-red-700 text-lg leading-none"
+                        className="text-xs font-bold text-red-500 hover:text-red-700 hover:underline transition-colors"
                         title="Remove"
                       >
-                        ×
+                        Remove
                       </button>
                     </td>
                   </tr>
@@ -283,7 +273,7 @@ export default function QuotationCreate() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-8 text-center text-slate-400 text-sm"
+                      className="px-4 py-8 text-center text-slate-400 font-medium text-sm"
                     >
                       No items added yet. Select a product above.
                     </td>
@@ -295,11 +285,11 @@ export default function QuotationCreate() {
                   <tr>
                     <td
                       colSpan={3}
-                      className="px-4 py-4 text-right font-bold text-slate-700 text-base"
+                      className="px-4 py-5 text-right font-bold text-slate-700 text-base"
                     >
                       Estimated Total
                     </td>
-                    <td className="px-4 py-4 text-right font-bold text-slate-900 text-lg font-mono">
+                    <td className="px-4 py-5 text-right font-bold text-slate-900 text-lg font-mono">
                       Rs. {total.toFixed(2)}
                     </td>
                     <td />
@@ -308,18 +298,25 @@ export default function QuotationCreate() {
               )}
             </table>
           </div>
+        </div>
 
+        <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-3 text-sm font-bold text-slate-600 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             disabled={items.length === 0 || submitting}
-            className="w-full rounded-md bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+            className="px-6 py-3 text-sm font-bold text-slate-900 bg-brand-neon rounded-full hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(206,243,109,0.4)] disabled:opacity-50 transition-all duration-200"
           >
-            {submitting
-              ? "Creating Quotation…"
-              : "Create Quotation (Kacha Bill)"}
+            {submitting ? "Creating..." : "Create Quotation (Kacha Bill)"}
           </button>
-        </form>
-      )}
+        </div>
+      </form>
     </div>
   );
 }

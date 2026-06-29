@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ShopSelector from "../../components/common/ShopSelector";
 import { apiFetch } from "../../utils/api";
+import { Edit, Trash2, Search, Plus, FileText } from "lucide-react";
+import Modal from "../../components/common/Modal";
+import SupplierForm from "./SupplierForm";
 
 export default function SuppliersList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -11,6 +14,10 @@ export default function SuppliersList() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [error, setError] = useState(null);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editSupplierId, setEditSupplierId] = useState(null);
 
   const load = async () => {
     if (!shopId) return;
@@ -40,8 +47,6 @@ export default function SuppliersList() {
     if (shopId) setSearchParams({ shop_id: shopId });
   }, [shopId, setSearchParams]);
 
-  const handleShopChange = (id) => setShopId(id);
-
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this supplier?")) return;
     try {
@@ -57,126 +62,184 @@ export default function SuppliersList() {
     }
   };
 
+  const openModal = (id = null) => {
+    setEditSupplierId(id);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditSupplierId(null);
+  };
+
+  const handleFormSuccess = () => {
+    closeModal();
+    load();
+  };
+
   const filtered = (suppliers || []).filter((s) => {
-    const name = (s?.company_name || "").toString().toLowerCase();
-    const phone = (s?.phone || "").toString().toLowerCase();
-    const addr = (s?.address || "").toString().toLowerCase();
+    const name = (s?.company_name || "").toLowerCase();
+    const phone = (s?.phone || "").toLowerCase();
     const qv = (q || "").toLowerCase();
-    return name.includes(qv) || phone.includes(qv) || addr.includes(qv);
+    return name.includes(qv) || phone.includes(qv);
   });
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-gray-900 font-sans">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
           Suppliers
         </h2>
         {shopId && (
-          <Link
-            to={`/suppliers/new?shop_id=${shopId}`}
-            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors shadow-sm"
+          <button
+            onClick={() => openModal()}
+            className="flex items-center gap-2 rounded-full bg-brand-neon px-5 py-2.5 text-sm font-bold text-slate-900 shadow-sm hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(206,243,109,0.4)] transition-all duration-200"
           >
+            <Plus className="w-4 h-4" strokeWidth={3} />
             Add Supplier
-          </Link>
+          </button>
         )}
       </div>
 
-      <ShopSelector value={shopId} onChange={handleShopChange} />
+      <div className="mb-6 flex flex-wrap items-center gap-4">
+        <ShopSelector value={shopId} onChange={(id) => { setShopId(id); setIsModalOpen(false); }} />
+
+        {shopId && (
+          <div className="relative flex-1 max-w-md">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <Search className="h-4 w-4 text-slate-400" />
+            </div>
+            <input
+              placeholder="Search by company name or phone..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="block w-full rounded-full border-0 py-2.5 pl-10 pr-4 text-sm text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon bg-white shadow-sm"
+            />
+          </div>
+        )}
+      </div>
 
       {shopId && (
         <>
-          <div className="mt-4 mb-4">
-            <input
-              placeholder="Search by company name, phone, address..."
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              className="w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            />
-          </div>
-
           {error && (
-            <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
+            <div className="mb-4 rounded-2xl bg-red-50 p-4 text-sm font-medium text-red-700 border border-red-200">
               {error}
             </div>
           )}
 
           {loading ? (
-            <div className="py-4 text-gray-600">Loading...</div>
+            <div className="py-4 text-slate-500 font-medium">Loading...</div>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Company Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Phone
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Address
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {filtered.length === 0 ? (
+            <div className="rounded-4xl bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead className="border-b border-slate-100 bg-white">
                     <tr>
-                      <td
-                        colSpan="4"
-                        className="px-6 py-8 text-center text-sm text-gray-500"
-                      >
-                        No suppliers found.
-                      </td>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Company Name
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Phone
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">
+                        Outstanding Balance
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">
+                        Actions
+                      </th>
                     </tr>
-                  ) : (
-                    filtered.map((supplier) => (
-                      <tr
-                        key={supplier?.id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-gray-900">
-                          {supplier?.company_name || "—"}
-                        </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                          {supplier?.phone || "—"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                          {supplier?.address || "—"}
-                        </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium space-x-3">
-                          <button
-                            onClick={() =>
-                              navigate(`/suppliers/${supplier.id}?shop_id=${shopId}`)
-                            }
-                            className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition-all duration-150"
-                          >
-                            View Ledger
-                          </button>
-                          <Link
-                            to={`/suppliers/${supplier.id}/edit?shop_id=${shopId}`}
-                            className="text-emerald-600 hover:text-emerald-900 transition-colors"
-                          >
-                            Edit
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(supplier.id)}
-                            className="text-red-600 hover:text-red-900 transition-colors"
-                          >
-                            Delete
-                          </button>
+                  </thead>
+                  <tbody>
+                    {filtered.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan="4"
+                          className="px-6 py-12 text-center text-sm font-medium text-slate-400"
+                        >
+                          No suppliers found.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      filtered.map((supplier) => (
+                        <tr
+                          key={supplier?.id}
+                          className="border-b border-slate-50 last:border-0 hover:bg-slate-50/80 transition-colors duration-200 group"
+                        >
+                          <td className="px-6 py-4 text-sm font-bold text-slate-900 group-hover:text-brand-neon transition-colors">
+                            {supplier?.company_name || "—"}
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                            {supplier?.phone || "—"}
+                          </td>
+                          <td className="px-6 py-4 text-sm font-bold text-right">
+                            <span
+                              className={
+                                Number(supplier?.current_balance || 0) > 0
+                                  ? "inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-600 ring-1 ring-red-100"
+                                  : "inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600"
+                              }
+                            >
+                              Rs.{" "}
+                              {Number(supplier?.current_balance || 0).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                },
+                              )}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() =>
+                                  navigate(`/suppliers/${supplier.id}?shop_id=${shopId}`)
+                                }
+                                title="View Ledger"
+                                className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
+                              >
+                                <FileText size={18} />
+                              </button>
+                              <button
+                                onClick={() => openModal(supplier.id)}
+                                title="Edit Supplier"
+                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                              >
+                                <Edit size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(supplier.id)}
+                                title="Delete Supplier"
+                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>
       )}
+
+      {/* Supplier Form Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editSupplierId ? "Edit Supplier" : "Add Supplier"}
+      >
+        <SupplierForm 
+          supplierId={editSupplierId} 
+          shopId={shopId} 
+          onSuccess={handleFormSuccess} 
+          onCancel={closeModal} 
+        />
+      </Modal>
     </div>
   );
 }

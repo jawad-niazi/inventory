@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import ShopSelector from "../../components/common/ShopSelector";
 import { apiFetch } from "../../utils/api";
+import { Plus, Search, ExternalLink } from "lucide-react";
+import Modal from "../../components/common/Modal";
+import PurchaseCreate from "./PurchaseCreate";
 
 export default function PurchaseList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -9,6 +12,9 @@ export default function PurchaseList() {
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filterSupplier, setFilterSupplier] = useState("");
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const load = async () => {
     if (!shopId) return;
@@ -29,6 +35,14 @@ export default function PurchaseList() {
     if (shopId) setSearchParams({ shop_id: shopId });
   }, [shopId, setSearchParams]);
 
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  const handleFormSuccess = () => {
+    closeModal();
+    load();
+  };
+
   const filtered = purchases.filter((p) =>
     (p.suppliers?.company_name || "Direct Supplier")
       .toLowerCase()
@@ -37,115 +51,137 @@ export default function PurchaseList() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-900">
-          Procurement (Purchases)
-        </h2>
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Procurement (Purchases)
+          </h2>
+        </div>
         {shopId && (
-          <Link
-            to={`/purchases/new?shop_id=${shopId}`}
-            className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+          <button
+            onClick={openModal}
+            className="flex items-center gap-2 rounded-full bg-brand-neon px-5 py-2.5 text-sm font-bold text-slate-900 shadow-sm hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(206,243,109,0.4)] transition-all duration-200"
           >
+            <Plus className="w-4 h-4" strokeWidth={3} />
             Create Purchase Order
-          </Link>
+          </button>
         )}
       </div>
 
-      <ShopSelector value={shopId} onChange={setShopId} />
+      <div className="mb-6">
+        <ShopSelector value={shopId} onChange={(id) => { setShopId(id); setIsModalOpen(false); }} />
+      </div>
 
       {shopId && (
         <>
-          <div className="mb-4">
-            <input
-              placeholder="Search by supplier..."
-              value={filterSupplier}
-              onChange={(e) => setFilterSupplier(e.target.value)}
-              className="rounded-md border border-slate-350 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 w-full max-w-md"
-            />
+          <div className="mb-6">
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <input
+                placeholder="Search by supplier..."
+                value={filterSupplier}
+                onChange={(e) => setFilterSupplier(e.target.value)}
+                className="w-full rounded-full border-0 bg-white px-10 py-2.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon transition-all shadow-sm"
+              />
+            </div>
           </div>
 
           {loading ? (
-            <p className="text-slate-600">Loading...</p>
+            <p className="text-slate-500 font-medium py-4">Loading purchase orders...</p>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Date
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Supplier
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Created By
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Total Cost
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-slate-500">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {filtered.map((p) => (
-                    <tr key={p.id}>
-                      <td className="px-4 py-3 text-sm text-slate-600">
-                        {new Date(p.created_at).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                        {p.suppliers?.company_name || "Direct Supplier"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">
-                        {p.app_users?.email || "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm font-bold text-slate-900">
-                        Rs. {Number(p.total_amount).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="flex items-center gap-2">
+            <div className="rounded-4xl bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead className="border-b border-slate-100 bg-white">
+                    <tr>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Date
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Supplier
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Created By
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">
+                        Total Cost
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Status
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((p) => (
+                      <tr key={p.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/80 transition-colors duration-200 group">
+                        <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                          {new Date(p.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-slate-900">
+                          {p.suppliers?.company_name || "Direct Supplier"}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-slate-600">
+                          {p.app_users?.email || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-slate-900 font-mono text-right">
+                          Rs. {Number(p.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
                           <span
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${
                               p.status === "received"
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-amber-100 text-amber-800"
+                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/50"
+                                : "bg-amber-50 text-amber-700 ring-1 ring-amber-200/50"
                             }`}
                           >
                             {p.status || "received"}
                           </span>
-                          {/* Auto-received on creation; manual receive button removed */}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <Link
-                          to={`/purchases/${p.id}?shop_id=${shopId}`}
-                          className="text-emerald-600 hover:text-emerald-700 font-semibold"
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Link
+                            to={`/purchases/${p.id}?shop_id=${shopId}`}
+                            className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            View Details
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                    {filtered.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-6 py-12 text-center text-sm font-medium text-slate-400"
                         >
-                          View Details
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                  {filtered.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-8 text-center text-sm text-slate-500"
-                      >
-                        No purchase orders found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                          No purchase orders found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>
       )}
+
+      {/* Purchase Order Form Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title="Create Purchase Order"
+        maxWidth="max-w-5xl"
+      >
+        <PurchaseCreate 
+          shopId={shopId} 
+          onSuccess={handleFormSuccess} 
+          onCancel={closeModal} 
+        />
+      </Modal>
     </div>
   );
 }
