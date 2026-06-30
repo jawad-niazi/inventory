@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { BASE_URL } from "../../utils/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -41,7 +42,7 @@ export default function Login() {
     setForgotError(null);
     setForgotLoading(true);
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail }),

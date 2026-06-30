@@ -1,0 +1,11 @@
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "dist"
+
+# SPA catch-all: redirect all routes to index.html so React Router handles them.
+# This fixes 404 errors on page refresh for client-side routes like /dashboard, /products, etc.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

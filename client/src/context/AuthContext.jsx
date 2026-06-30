@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "../services/supabase";
+import { apiFetch } from "../utils/api";
 
 export const AuthContext = createContext(null);
 
@@ -21,14 +22,11 @@ export const AuthProvider = ({ children }) => {
 
     setProfileLoading(true);
     try {
-      await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Register the user in the backend (creates app_users row if missing)
+      await apiFetch("/api/auth/register", { method: "POST" });
 
-      const res = await fetch("/api/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Fetch the user's profile (role, shop_id, etc.)
+      const res = await apiFetch("/api/auth/me");
 
       if (res.ok) {
         const body = await res.json();

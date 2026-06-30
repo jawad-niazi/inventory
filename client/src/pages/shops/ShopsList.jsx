@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../../services/supabase";
-
-function getToken() {
-  return supabase.auth.getSession().then((s) => s.data.session?.access_token);
-}
+import { apiFetch } from "../../utils/api";
 
 const btnSecondary =
   "rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200";
@@ -19,10 +15,7 @@ export default function ShopsList() {
 
   const fetchShops = async () => {
     setLoading(true);
-    const token = await getToken();
-    const res = await fetch("/api/shops", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await apiFetch("/api/shops");
     if (res.ok) {
       const body = await res.json();
       setShops(body.shops || []);
@@ -36,23 +29,14 @@ export default function ShopsList() {
 
   const handleDelete = async (id) => {
     if (!confirm("Delete shop?")) return;
-    const token = await getToken();
-    const res = await fetch(`/api/shops/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await apiFetch(`/api/shops/${id}`, { method: "DELETE" });
     if (res.ok) fetchShops();
   };
 
   const toggleStatus = async (shop) => {
-    const token = await getToken();
     const newStatus = shop.status === "active" ? "inactive" : "active";
-    const res = await fetch(`/api/shops/${shop.id}`, {
+    const res = await apiFetch(`/api/shops/${shop.id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
       body: JSON.stringify({ status: newStatus }),
     });
     if (res.ok) fetchShops();

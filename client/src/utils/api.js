@@ -1,9 +1,9 @@
 import { supabase } from "../services/supabase";
 
-// 🌐 Jab live chalega toh Render ka URL pakray ga, local par empty string
-const BASE_URL = "https://inventory-4zxb.onrender.com";
-
-console.log("BASE_URL:", BASE_URL); // Debug ke liye
+// Environment-aware BASE_URL:
+// - Local dev: VITE_API_URL is empty → BASE_URL = "" → Vite proxy handles /api/* → localhost:4000
+// - Production (Netlify): VITE_API_URL = "https://inventory-4zxb.onrender.com" (set in Netlify env vars)
+export const BASE_URL = import.meta.env.VITE_API_URL || "";
 
 export async function getToken() {
   const session = await supabase.auth.getSession();
@@ -21,10 +21,7 @@ export async function apiFetch(path, options = {}) {
     delete headers["Content-Type"];
   }
 
-  // 🎯 Yahan hum ne BASE_URL ko path ke sath jor diya hai
   const fullPath = `${BASE_URL}${path}`;
-
-  // 🚀 Ab fetch direct path par nahi, balki fullPath par request bhejega
   const res = await fetch(fullPath, { ...options, headers });
   return res;
 }

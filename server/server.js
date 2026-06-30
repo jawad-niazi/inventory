@@ -10,10 +10,21 @@ const authMiddleware = require('./middleware/auth')
 
 const app = express()
 
-// 🌐 CORS configuration: Apne Vercel frontend link ko allow karo
-// 🌐 CORS configuration: Is Vercel link ko allow karo
+// CORS configuration: whitelist allowed frontend origins
 app.use(cors({
-  origin: '*', // 👈 Is se har frontend URL allow ho jayega, koi link block nahi hoga
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, server-to-server)
+    if (!origin) return callback(null, true);
+    const allowed = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean);
+    if (allowed.includes(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

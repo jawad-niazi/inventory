@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "../../services/supabase";
-
-function getToken() {
-  return supabase.auth.getSession().then((s) => s.data.session?.access_token);
-}
+import { apiFetch } from "../../utils/api";
 
 const inputClass =
   "w-full rounded-md border border-slate-350 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
@@ -28,10 +24,7 @@ export default function ShopForm() {
     if (!id) return;
     const load = async () => {
       setLoading(true);
-      const token = await getToken();
-      const res = await fetch("/api/shops", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiFetch("/api/shops");
       if (res.ok) {
         const body = await res.json();
         const shop = (body.shops || []).find((s) => s.id === id);
@@ -54,15 +47,10 @@ export default function ShopForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = await getToken();
     const method = id ? "PUT" : "POST";
     const url = id ? `/api/shops/${id}` : "/api/shops";
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
       body: JSON.stringify(form),
     });
     if (res.ok) {
