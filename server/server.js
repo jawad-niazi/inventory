@@ -11,18 +11,26 @@ const authMiddleware = require('./middleware/auth')
 const app = express()
 
 // CORS configuration: whitelist allowed frontend origins
+// CORS configuration: whitelist allowed frontend origins
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, Postman, server-to-server)
     if (!origin) return callback(null, true);
+    
+    // Clean trailing slashes for consistent comparison
+    const cleanOrigin = origin.replace(/\/$/, '');
+    
     const allowed = [
       'http://localhost:5173',
       'http://localhost:3000',
-      process.env.FRONTEND_URL,
+      process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : null
     ].filter(Boolean);
-    if (allowed.includes(origin)) {
+    
+    if (allowed.includes(cleanOrigin)) {
       return callback(null, true);
     }
+    
+    console.error(`[CORS Error] Blocked origin: ${origin}. Allowed:`, allowed);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,

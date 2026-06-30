@@ -3,7 +3,8 @@ import { supabase } from "../services/supabase";
 // Environment-aware BASE_URL:
 // - Local dev: VITE_API_URL is empty → BASE_URL = "" → Vite proxy handles /api/* → localhost:4000
 // - Production (Netlify): VITE_API_URL = "https://inventory-4zxb.onrender.com" (set in Netlify env vars)
-export const BASE_URL = import.meta.env.VITE_API_URL || "";
+const rawApiUrl = import.meta.env.VITE_API_URL || "";
+export const BASE_URL = rawApiUrl.replace(/\/$/, "");
 
 export async function getToken() {
   const session = await supabase.auth.getSession();
