@@ -32,6 +32,9 @@ export default function Login() {
         return;
       }
       navigate("/dashboard");
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err.message || "An error occurred during sign in");
     } finally {
       setSubmitting(false);
     }
