@@ -20,10 +20,10 @@ export default function Header() {
     <header className="flex items-center justify-between px-6 py-8 md:px-8 lg:px-10">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-          Welcome back {capitalizedName} <span className="text-3xl">👋</span>
+          Welcome back {capitalizedName}
         </h1>
       </div>
-      
+
       <div className="flex items-center gap-6">
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -35,13 +35,13 @@ export default function Header() {
             placeholder="Search courses..."
           />
         </div>
-        
+
         {role && (
           <span className="hidden md:inline-flex rounded-full bg-brand-neon/20 px-3 py-1 text-xs font-semibold text-slate-800">
             {role.replace("_", " ")}
           </span>
         )}
-        
+
         <div className="relative flex items-center gap-3">
           <button
             type="button"
