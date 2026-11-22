@@ -1,24 +1,39 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { BASE_URL } from "../../utils/api";
+import {
+  Box,
+  Mail,
+  Lock,
+  Store,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ArrowLeft,
+  Sparkles,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 
-export default function Login() {
+export default function Login({ defaultTab = "signin" }) {
+  const [mode, setMode] = useState(defaultTab); // "signin" | "signup" | "forgot"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [shopName, setShopName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Forgot Password state
-  const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [forgotError, setForgotError] = useState(null);
 
-  const [selectedShop, setSelectedShop] = useState(null);
-
-  const { signin } = useAuth();
+  const { signin, signup } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -26,7 +41,7 @@ export default function Login() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await signin(email, password);
+      const res = await signin(email.trim().toLowerCase(), password);
       if (res.error) {
         setError(res.error.message);
         return;
@@ -40,6 +55,36 @@ export default function Login() {
     }
   };
 
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    const cleanShop = shopName.trim();
+    if (!cleanShop) {
+      setError("Please enter a shop name");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await signup(email.trim().toLowerCase(), password, cleanShop);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError(err.message || "An error occurred during sign up");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     setForgotError(null);
@@ -48,7 +93,7 @@ export default function Login() {
       const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: forgotEmail }),
+        body: JSON.stringify({ email: forgotEmail.trim().toLowerCase() }),
       });
       const body = await res.json();
       if (!res.ok) {
@@ -64,77 +109,89 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 px-4">
-      {/* Background grid */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/20 via-slate-900 to-slate-900 pointer-events-none" />
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-[#07090e] overflow-hidden select-none">
+      {/* ── Glassy Ambient Glow Orbs ── */}
+      <div className="absolute -top-32 -left-32 w-96 sm:w-[500px] h-96 sm:h-[500px] bg-brand-neon/15 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-96 sm:w-[500px] h-96 sm:h-[500px] bg-emerald-500/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-slate-800/20 rounded-full blur-[110px] pointer-events-none" />
 
-      <div className="relative w-full max-w-md">
-        {/* Logo / Brand */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-600 shadow-lg shadow-emerald-900/50 mb-4">
-            <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
+      {/* ── Subtle Geometric Grid Overlay ── */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+
+      {/* ── Main Glass Card ── */}
+      <div className="relative w-full max-w-md backdrop-blur-2xl bg-slate-900/60 border border-white/10 rounded-4xl p-8 sm:p-10 shadow-[0_25px_60px_rgba(0,0,0,0.65)] ring-1 ring-white/5 transition-all">
+        {/* Logo & Heading */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-neon text-slate-950 shadow-[0_0_25px_rgba(206,243,109,0.35)] mb-3">
+            <Box className="w-7 h-7 stroke-[2.5]" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Inventory Manager</h1>
-          <p className="text-slate-400 text-sm mt-1">Sign in to your account</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Inventory Manager
+          </h1>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1">
+            {mode === "signin"
+              ? "Sign in to manage your shop"
+              : mode === "signup"
+              ? "Create your account and dedicated shop"
+              : "Reset your account password"}
+          </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-700/60 bg-slate-800/80 backdrop-blur-sm p-8 shadow-2xl">
-          {!selectedShop ? (
-            /* ── Shop Selection Panel ── */
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-bold text-white">Select Your Shop</h2>
-                <p className="text-slate-400 text-sm mt-1">Choose a shop to continue</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setSelectedShop("Shop 1")}
-                  className="flex flex-col items-center justify-center p-6 rounded-xl border border-slate-600 bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500/50 transition-all group"
-                >
-                  <div className="w-12 h-12 rounded-full bg-slate-600 group-hover:bg-emerald-500/20 flex items-center justify-center mb-3 transition-colors">
-                    <svg className="w-6 h-6 text-slate-300 group-hover:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                  </div>
-                  <span className="text-white font-medium">Shop 1</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedShop("Shop 2")}
-                  className="flex flex-col items-center justify-center p-6 rounded-xl border border-slate-600 bg-slate-700/50 hover:bg-emerald-600/20 hover:border-emerald-500/50 transition-all group"
-                >
-                  <div className="w-12 h-12 rounded-full bg-slate-600 group-hover:bg-emerald-500/20 flex items-center justify-center mb-3 transition-colors">
-                    <svg className="w-6 h-6 text-slate-300 group-hover:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                  </div>
-                  <span className="text-white font-medium">Shop 2</span>
-                </button>
-              </div>
-            </div>
-          ) : !showForgot ? (
-            /* ── Login Form ── */
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="flex items-center gap-3 mb-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedShop(null)}
-                  className="text-slate-400 hover:text-white transition-colors"
-                  aria-label="Back"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <h2 className="text-lg font-semibold text-white">Login to {selectedShop}</h2>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                  Email address
-                </label>
+        {/* ── Tab Switcher (Sign In vs Create Account) ── */}
+        {mode !== "forgot" && (
+          <div className="flex bg-slate-950/70 p-1.5 rounded-full border border-white/10 mb-6">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signin");
+                setError(null);
+              }}
+              className={`flex-1 py-2 text-xs sm:text-sm font-bold rounded-full transition-all duration-200 cursor-pointer ${
+                mode === "signin"
+                  ? "bg-brand-neon text-slate-950 shadow-md shadow-brand-neon/25"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signup");
+                setError(null);
+              }}
+              className={`flex-1 py-2 text-xs sm:text-sm font-bold rounded-full transition-all duration-200 cursor-pointer ${
+                mode === "signup"
+                  ? "bg-brand-neon text-slate-950 shadow-md shadow-brand-neon/25"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+        )}
+
+        {/* ── Error Banner ── */}
+        {error && (
+          <div className="mb-5 rounded-2xl bg-red-950/50 border border-red-500/30 p-3.5 text-xs sm:text-sm text-red-300 flex items-start gap-2.5 animate-in fade-in duration-200">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <span className="flex-1">{error}</span>
+          </div>
+        )}
+
+        {/* ──────────────────────────────────────────────────────────── */}
+        {/* MODE: SIGN IN                                                */}
+        {/* ──────────────────────────────────────────────────────────── */}
+        {mode === "signin" && (
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <Mail className="h-4 w-4" />
+                </div>
                 <input
                   id="login-email"
                   type="email"
@@ -142,94 +199,239 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="you@example.com"
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                  className="w-full rounded-2xl border border-slate-700/70 bg-slate-800/40 px-4 py-3 pl-10 text-sm text-white placeholder-slate-500 focus:border-brand-neon focus:outline-none focus:ring-1 focus:ring-brand-neon transition-all"
                 />
               </div>
+            </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-medium text-slate-300">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowForgot(true);
-                      setForgotEmail(email);
-                      setForgotError(null);
-                      setForgotSuccess(false);
-                    }}
-                    className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
-                  >
-                    Forgot Password?
-                  </button>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("forgot");
+                    setForgotEmail(email);
+                    setForgotError(null);
+                    setForgotSuccess(false);
+                  }}
+                  className="text-xs text-brand-neon hover:underline font-semibold transition-colors"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <Lock className="h-4 w-4" />
                 </div>
                 <input
                   id="login-password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                  className="w-full rounded-2xl border border-slate-700/70 bg-slate-800/40 px-4 py-3 pl-10 pr-10 text-sm text-white placeholder-slate-500 focus:border-brand-neon focus:outline-none focus:ring-1 focus:ring-brand-neon transition-all"
                 />
-              </div>
-
-              {error && (
-                <div className="rounded-lg bg-red-900/40 border border-red-700/50 px-4 py-3 text-sm text-red-300">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors shadow-md shadow-emerald-900/30"
-              >
-                {submitting ? "Signing in…" : "Sign in"}
-              </button>
-            </form>
-          ) : (
-            /* ── Forgot Password Panel ── */
-            <div className="space-y-5">
-              <div className="flex items-center gap-3 mb-2">
                 <button
                   type="button"
-                  onClick={() => { setShowForgot(false); setForgotSuccess(false); setForgotError(null); }}
-                  className="text-slate-400 hover:text-white transition-colors"
-                  aria-label="Back"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-white"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
-                <h2 className="text-lg font-semibold text-white">Reset Password</h2>
               </div>
+            </div>
 
-              {forgotSuccess ? (
-                <div className="rounded-lg bg-emerald-900/40 border border-emerald-700/50 px-4 py-4 text-sm text-emerald-300 text-center space-y-2">
-                  <svg className="w-8 h-8 mx-auto text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  <p className="font-medium">Check your email!</p>
-                  <p className="text-slate-400">A password reset link has been sent to <span className="text-white">{forgotEmail}</span>.</p>
-                  <button
-                    type="button"
-                    onClick={() => { setShowForgot(false); setForgotSuccess(false); }}
-                    className="mt-2 text-xs text-emerald-400 hover:underline"
-                  >
-                    Back to login
-                  </button>
-                </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full mt-2 rounded-full bg-brand-neon hover:bg-[#bde85b] py-3.5 px-6 text-sm font-bold text-slate-950 shadow-[0_4px_20px_rgba(206,243,109,0.35)] hover:shadow-[0_6px_25px_rgba(206,243,109,0.5)] active:scale-[0.99] disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Signing in…</span>
+                </>
               ) : (
-                <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <p className="text-sm text-slate-400">
-                    Enter your registered email address and we'll send you a password reset link.
-                  </p>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                      Email address
-                    </label>
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                </>
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* ──────────────────────────────────────────────────────────── */}
+        {/* MODE: SIGN UP (CREATE ACCOUNT & SHOP)                        */}
+        {/* ──────────────────────────────────────────────────────────── */}
+        {mode === "signup" && (
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                Shop Name
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <Store className="h-4 w-4" />
+                </div>
+                <input
+                  id="signup-shop-name"
+                  type="text"
+                  value={shopName}
+                  onChange={(e) => setShopName(e.target.value)}
+                  required
+                  placeholder="e.g. Acme Tech, Prime Goods"
+                  className="w-full rounded-2xl border border-slate-700/70 bg-slate-800/40 px-4 py-3 pl-10 text-sm text-white placeholder-slate-500 focus:border-brand-neon focus:outline-none focus:ring-1 focus:ring-brand-neon transition-all"
+                />
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-brand-neon shrink-0" />
+                Your shop will be created and assigned to your account.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <Mail className="h-4 w-4" />
+                </div>
+                <input
+                  id="signup-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="manager@example.com"
+                  className="w-full rounded-2xl border border-slate-700/70 bg-slate-800/40 px-4 py-3 pl-10 text-sm text-white placeholder-slate-500 focus:border-brand-neon focus:outline-none focus:ring-1 focus:ring-brand-neon transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <input
+                  id="signup-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="At least 6 characters"
+                  className="w-full rounded-2xl border border-slate-700/70 bg-slate-800/40 px-4 py-3 pl-10 pr-10 text-sm text-white placeholder-slate-500 focus:border-brand-neon focus:outline-none focus:ring-1 focus:ring-brand-neon transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-white"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <input
+                  id="signup-confirm-password"
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  placeholder="Repeat your password"
+                  className="w-full rounded-2xl border border-slate-700/70 bg-slate-800/40 px-4 py-3 pl-10 text-sm text-white placeholder-slate-500 focus:border-brand-neon focus:outline-none focus:ring-1 focus:ring-brand-neon transition-all"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full mt-2 rounded-full bg-brand-neon hover:bg-[#bde85b] py-3.5 px-6 text-sm font-bold text-slate-950 shadow-[0_4px_20px_rgba(206,243,109,0.35)] hover:shadow-[0_6px_25px_rgba(206,243,109,0.5)] active:scale-[0.99] disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Creating your shop…</span>
+                </>
+              ) : (
+                <>
+                  <span>Create Shop & Account</span>
+                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                </>
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* ──────────────────────────────────────────────────────────── */}
+        {/* MODE: FORGOT PASSWORD                                        */}
+        {/* ──────────────────────────────────────────────────────────── */}
+        {mode === "forgot" && (
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signin");
+                setForgotSuccess(false);
+                setForgotError(null);
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors mb-2 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Sign In
+            </button>
+
+            {forgotSuccess ? (
+              <div className="rounded-2xl bg-emerald-950/40 border border-emerald-500/30 p-5 text-center space-y-3">
+                <CheckCircle2 className="w-10 h-10 mx-auto text-brand-neon" />
+                <h3 className="font-bold text-white text-base">Check Your Inbox</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  A password reset link has been dispatched to{" "}
+                  <span className="text-white font-semibold">{forgotEmail}</span>.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("signin");
+                    setForgotSuccess(false);
+                  }}
+                  className="mt-3 inline-block rounded-full bg-brand-neon px-5 py-2 text-xs font-bold text-slate-950 hover:bg-[#bde85b] transition-all cursor-pointer"
+                >
+                  Return to Sign In
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Enter your registered account email and we'll send you a secure link to reset your password.
+                </p>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                      <Mail className="h-4 w-4" />
+                    </div>
                     <input
                       id="forgot-email"
                       type="email"
@@ -237,26 +439,35 @@ export default function Login() {
                       onChange={(e) => setForgotEmail(e.target.value)}
                       required
                       placeholder="you@example.com"
-                      className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                      className="w-full rounded-2xl border border-slate-700/70 bg-slate-800/40 px-4 py-3 pl-10 text-sm text-white placeholder-slate-500 focus:border-brand-neon focus:outline-none focus:ring-1 focus:ring-brand-neon transition-all"
                     />
                   </div>
-                  {forgotError && (
-                    <div className="rounded-lg bg-red-900/40 border border-red-700/50 px-4 py-3 text-sm text-red-300">
-                      {forgotError}
-                    </div>
+                </div>
+
+                {forgotError && (
+                  <div className="rounded-2xl bg-red-950/50 border border-red-500/30 p-3 text-xs text-red-300">
+                    {forgotError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  className="w-full rounded-full bg-brand-neon hover:bg-[#bde85b] py-3.5 px-6 text-sm font-bold text-slate-950 shadow-[0_4px_20px_rgba(206,243,109,0.35)] disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {forgotLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Sending reset link…</span>
+                    </>
+                  ) : (
+                    <span>Send Reset Link</span>
                   )}
-                  <button
-                    type="submit"
-                    disabled={forgotLoading}
-                    className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors"
-                  >
-                    {forgotLoading ? "Sending…" : "Send Reset Link"}
-                  </button>
-                </form>
-              )}
-            </div>
-          )}
-        </div>
+                </button>
+              </form>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

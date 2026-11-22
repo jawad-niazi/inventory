@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch, fetchShops } from "../../utils/api";
 import { useAuth } from "../../hooks/useAuth";
+import CustomSelect from "./CustomSelect";
 
 export default function ShopSelector({ value, onChange }) {
-  const { role, shopId } = useAuth();
+  const { role, shopId, switchShop } = useAuth();
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -12,7 +13,10 @@ export default function ShopSelector({ value, onChange }) {
       if (role === "super_admin") {
         const list = await fetchShops();
         setShops(list);
-        if (!value && list.length > 0) onChange(list[0].id);
+        if (!value && list.length > 0) {
+          onChange(list[0].id);
+          switchShop(list[0].id, list[0].name);
+        }
       } else if (shopId) {
         onChange(shopId);
       }
@@ -25,13 +29,23 @@ export default function ShopSelector({ value, onChange }) {
 
   if (role !== "super_admin") return null;
 
+  const handleChange = (e) => {
+    const newId = e.target.value;
+    onChange(newId);
+    const selected = shops.find((s) => s.id === newId);
+    if (selected) {
+      switchShop(selected.id, selected.name);
+    }
+  };
+
   return (
-    <div className="mb-4">
-      <label className="mb-1 block text-sm font-medium text-gray-700">Shop</label>
-      <select
+    <div className="mb-4 max-w-xs">
+      <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Shop</label>
+      <CustomSelect
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        onChange={handleChange}
+        className="rounded-2xl border-0 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-brand-neon shadow-sm"
+        placeholder="Select a shop"
       >
         <option value="">Select a shop</option>
         {shops.map((s) => (
@@ -39,7 +53,7 @@ export default function ShopSelector({ value, onChange }) {
             {s.name}
           </option>
         ))}
-      </select>
+      </CustomSelect>
     </div>
   );
 }

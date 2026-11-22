@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import { apiFetch } from "../../utils/api";
+import CustomSelect from "../../components/common/CustomSelect";
 
 const inputClass =
   "w-full rounded-md border border-slate-350 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
@@ -8,6 +10,7 @@ const inputClass =
 export default function ShopForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { switchShop } = useAuth();
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -56,10 +59,15 @@ export default function ShopForm() {
     if (res.ok) {
       if (method === "POST") {
         const body = await res.json();
+        if (body.shop) {
+          switchShop(body.shop.id, body.shop.name);
+        }
         if (body.credentials) {
           setCreatedCredentials(body.credentials);
           return;
         }
+      } else if (id && form.name) {
+        switchShop(id, form.name);
       }
       navigate("/shops");
     } else {
@@ -192,15 +200,16 @@ export default function ShopForm() {
             <label className="mb-1 block text-sm font-medium text-slate-700">
               Status
             </label>
-            <select
+            <CustomSelect
               name="status"
               value={form.status}
               onChange={handleChange}
               className={inputClass}
+              placeholder="Active"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-            </select>
+            </CustomSelect>
           </div>
           <div className="flex gap-3 pt-2">
             <button

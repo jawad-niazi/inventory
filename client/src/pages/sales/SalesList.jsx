@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import ShopSelector from "../../components/common/ShopSelector";
+import CustomSelect from "../../components/common/CustomSelect";
 import { apiFetch } from "../../utils/api";
 import { Plus, Search, ExternalLink } from "lucide-react";
 
@@ -72,16 +73,19 @@ export default function SalesList() {
                 className="w-full rounded-full border-0 bg-white px-10 py-2.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon transition-all shadow-sm"
               />
             </div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-full border-0 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-brand-neon transition-all shadow-sm cursor-pointer"
-            >
-              <option value="">All Statuses</option>
-              <option value="completed">Completed</option>
-              <option value="pending">Pending</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+            <div className="min-w-[150px]">
+              <CustomSelect
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-brand-neon transition-all shadow-sm cursor-pointer"
+                placeholder="All Statuses"
+              >
+                <option value="">All Statuses</option>
+                <option value="completed">Completed</option>
+                <option value="pending">Pending</option>
+                <option value="cancelled">Cancelled</option>
+              </CustomSelect>
+            </div>
           </div>
 
           {loading ? (

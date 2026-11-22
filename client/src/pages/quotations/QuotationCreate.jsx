@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch } from "../../utils/api";
+import CustomSelect from "../../components/common/CustomSelect";
 
 const inputClass =
   "w-full rounded-2xl border-0 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon focus:bg-white transition-all";
@@ -171,12 +172,15 @@ export default function QuotationCreate({ shopId, onSuccess, onCancel }) {
             Quotation Items
           </h3>
 
-          <select
+          <CustomSelect
+            value=""
             onChange={(e) => {
-              addProductRow(e.target.value);
-              e.target.value = "";
+              if (e.target.value) {
+                addProductRow(e.target.value);
+              }
             }}
             className={inputClass}
+            placeholder="— Select a product to add —"
           >
             <option value="">— Select a product to add —</option>
             {(products || []).map((p) => (
@@ -186,7 +190,7 @@ export default function QuotationCreate({ shopId, onSuccess, onCancel }) {
                 {p.sku ? ` (${p.sku})` : ""}
               </option>
             ))}
-          </select>
+          </CustomSelect>
 
           <div className="overflow-x-auto mt-4">
             <table className="w-full text-left border-collapse">

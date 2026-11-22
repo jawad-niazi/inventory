@@ -53,7 +53,8 @@ export default function AppRoutes() {
     <Router>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Login defaultTab="signin" />} />
+        <Route path="/signup" element={<Login defaultTab="signup" />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           element={
@@ -130,6 +131,7 @@ export default function AppRoutes() {
             }
           />
         </Route>
+        <Route path="*" element={<App />} />
       </Routes>
     </Router>
   );

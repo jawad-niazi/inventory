@@ -5,6 +5,7 @@ import { apiFetch } from "../../utils/api";
 import { Edit, Trash2, Search, Plus } from "lucide-react";
 import Modal from "../../components/common/Modal";
 import ProductForm from "./ProductForm";
+import CustomSelect from "../../components/common/CustomSelect";
 
 export default function ProductList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -12,6 +13,8 @@ export default function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,19 +65,52 @@ export default function ProductList() {
     load();
   };
 
-  const filtered = products.filter(
-    (p) =>
+  // Derive available categories from loaded products
+  const availableCategories = Array.from(
+    new Set(
+      products
+        .map((p) => p.categories?.name)
+        .filter(Boolean)
+    )
+  ).sort();
+
+  const filtered = products.filter((p) => {
+    const matchSearch =
       p.name.toLowerCase().includes(q.toLowerCase()) ||
       (p.sku || "").toLowerCase().includes(q.toLowerCase()) ||
-      (p.model_name || "").toLowerCase().includes(q.toLowerCase()),
-  );
+      (p.product_code || "").toLowerCase().includes(q.toLowerCase()) ||
+      (p.model_name || "").toLowerCase().includes(q.toLowerCase());
+
+    const matchCategory = filterCategory
+      ? (p.categories?.name || "").toLowerCase() === filterCategory.toLowerCase()
+      : true;
+
+    const isLow =
+      p.low_stock_threshold > 0 &&
+      p.quantity <= p.low_stock_threshold;
+
+    let matchStatus = true;
+    if (filterStatus === "in_stock") {
+      matchStatus = !isLow;
+    } else if (filterStatus === "low_stock") {
+      matchStatus = isLow;
+    }
+
+    return matchSearch && matchCategory && matchStatus;
+  });
 
   return (
     <div>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Products</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Products</h2>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+            {products.length} {products.length === 1 ? "product" : "products"}
+          </span>
+        </div>
         {shopId && (
           <button
+            data-tour="add-product-btn"
             onClick={() => openModal()}
             className="flex items-center gap-2 rounded-full bg-brand-neon px-5 py-2.5 text-sm font-bold text-slate-900 shadow-sm hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(206,243,109,0.4)] transition-all duration-200"
           >
@@ -84,21 +120,52 @@ export default function ProductList() {
         )}
       </div>
 
-      <div className="mb-6 flex flex-wrap items-center gap-4">
+      <div className="mb-6 flex flex-wrap items-center gap-3">
         <ShopSelector value={shopId} onChange={handleShopChange} />
 
         {shopId && (
-          <div className="relative flex-1 max-w-md">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-              <Search className="h-4 w-4 text-slate-400" />
+          <>
+            <div className="relative flex-1 min-w-[220px] max-w-md">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                <Search className="h-4 w-4 text-slate-400" />
+              </div>
+              <input
+                placeholder="Search products..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="block w-full rounded-full border-0 py-2.5 pl-10 pr-4 text-sm text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon bg-white shadow-sm"
+              />
             </div>
-            <input
-              placeholder="Search products..."
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              className="block w-full rounded-full border-0 py-2.5 pl-10 pr-4 text-sm text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon bg-white shadow-sm"
-            />
-          </div>
+
+            <div className="min-w-[180px]">
+              <CustomSelect
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-brand-neon transition-all shadow-sm cursor-pointer"
+                placeholder="All Categories"
+              >
+                <option value="">All Categories</option>
+                {availableCategories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </option>
+                ))}
+              </CustomSelect>
+            </div>
+
+            <div className="min-w-[150px]">
+              <CustomSelect
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-brand-neon transition-all shadow-sm cursor-pointer"
+                placeholder="All Statuses"
+              >
+                <option value="">All Statuses</option>
+                <option value="in_stock">In Stock</option>
+                <option value="low_stock">Low Stock</option>
+              </CustomSelect>
+            </div>
+          </>
         )}
       </div>
 
@@ -126,6 +193,9 @@ export default function ProductList() {
                       </th>
                       <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
                         Stock
+                      </th>
+                      <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Status
                       </th>
                       <th className="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">
                         Actions
@@ -157,7 +227,7 @@ export default function ProductList() {
                                   {p.name}
                                 </span>
                                 <span className="block text-xs font-medium text-slate-400 mt-0.5">
-                                  {p.model_name || "No Model"}
+                                  {p.model_name && p.model_name !== "No Model" ? p.model_name : "-"}
                                 </span>
                               </div>
                             </div>
@@ -171,7 +241,10 @@ export default function ProductList() {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm font-bold text-slate-700">
-                            Rs. {Number(p.price).toFixed(2)}
+                            Rs. {Number(p.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-6 py-4 text-sm font-medium text-slate-700">
+                            {p.quantity ?? 0}
                           </td>
                           <td className="px-6 py-4 text-sm">
                             <span
@@ -179,7 +252,7 @@ export default function ProductList() {
                                 low ? "bg-red-50 text-red-600 ring-1 ring-red-100" : "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100"
                               }`}
                             >
-                              {p.quantity} {low && " (Low)"}
+                              {low ? "Low Stock" : "In Stock"}
                             </span>
                           </td>
                           <td className="px-6 py-4">
@@ -187,16 +260,22 @@ export default function ProductList() {
                               <button
                                 type="button"
                                 onClick={() => openModal(p.id)}
-                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                                title="Edit product"
+                                aria-label={`Edit ${p.name}`}
                               >
-                                <Edit size={18} />
+                                <Edit size={15} />
+                                <span>Edit</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDelete(p.id)}
-                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                title="Delete product"
+                                aria-label={`Delete ${p.name}`}
                               >
-                                <Trash2 size={18} />
+                                <Trash2 size={15} />
+                                <span>Delete</span>
                               </button>
                             </div>
                           </td>
@@ -206,15 +285,24 @@ export default function ProductList() {
                     {filtered.length === 0 && (
                       <tr>
                         <td
-                          colSpan={6}
+                          colSpan={7}
                           className="px-6 py-12 text-center text-sm font-medium text-slate-400"
                         >
-                          No products found matching your search.
+                          No products match this filter
                         </td>
                       </tr>
                     )}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Table Footer */}
+              <div className="border-t border-slate-100 bg-white px-6 py-4 flex items-center justify-between text-sm text-slate-500">
+                <p className="font-medium">
+                  Showing <span className="font-bold text-slate-900">{filtered.length}</span> of{" "}
+                  <span className="font-bold text-slate-900">{products.length}</span>{" "}
+                  {products.length === 1 ? "product" : "products"}
+                </p>
               </div>
             </div>
           )}

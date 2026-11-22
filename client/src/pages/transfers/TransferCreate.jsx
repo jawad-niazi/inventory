@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch } from "../../utils/api";
+import CustomSelect from "../../components/common/CustomSelect";
 
 const inputClass =
   "w-full rounded-2xl border-0 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon focus:bg-white transition-all";
@@ -153,11 +154,12 @@ export default function TransferCreate({ shopId, onSuccess, onCancel }) {
 
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-700">Destination Shop</label>
-            <select
+            <CustomSelect
               value={selectedToShopId}
               onChange={(e) => setSelectedToShopId(e.target.value)}
               required
               className={inputClass}
+              placeholder="-- Select Destination Shop --"
             >
               <option value="">-- Select Destination Shop --</option>
               {shops.map((s) => (
@@ -165,7 +167,7 @@ export default function TransferCreate({ shopId, onSuccess, onCancel }) {
                   {s.name}
                 </option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
         </div>
 
@@ -173,12 +175,15 @@ export default function TransferCreate({ shopId, onSuccess, onCancel }) {
           <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4">Select Transfer Items</h3>
 
           <div>
-            <select
+            <CustomSelect
+              value=""
               onChange={(e) => {
-                addProductRow(e.target.value);
-                e.target.value = "";
+                if (e.target.value) {
+                  addProductRow(e.target.value);
+                }
               }}
               className={inputClass}
+              placeholder="-- Choose Product to Transfer --"
             >
               <option value="">-- Choose Product to Transfer --</option>
               {products.map((p) => (
@@ -186,7 +191,7 @@ export default function TransferCreate({ shopId, onSuccess, onCancel }) {
                   {p.name} (available: {p.quantity})
                 </option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
 
           <div className="overflow-x-auto mt-4">

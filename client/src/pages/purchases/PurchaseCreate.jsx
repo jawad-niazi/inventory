@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../../utils/api";
+import CustomSelect from "../../components/common/CustomSelect";
 
 const inputClass =
   "w-full rounded-2xl border-0 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon focus:bg-white transition-all";
@@ -304,10 +305,11 @@ export default function PurchaseCreate() {
             <label className="text-sm font-bold text-slate-700 mb-2 block">
               Supplier Vendor
             </label>
-            <select
+            <CustomSelect
               value={selectedSupplierId}
               onChange={(e) => setSelectedSupplierId(e.target.value)}
               className={inputClass}
+              placeholder="Direct / Walk-in Supplier"
             >
               <option value="">Direct / Walk-in Supplier</option>
               {suppliers.map((s) => (
@@ -315,7 +317,7 @@ export default function PurchaseCreate() {
                   {s.company_name}
                 </option>
               ))}
-            </select>
+            </CustomSelect>
           </div>
 
           {/* PO Items */}

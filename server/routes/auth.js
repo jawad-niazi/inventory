@@ -2,6 +2,9 @@ const router = require('express').Router()
 const ctrl = require('../controllers/authController')
 const authMiddleware = require('../middleware/auth')
 
+// Public signup: creates shop, creates auth user, creates app_users row
+router.post('/signup', ctrl.signup)
+
 // register: client signs up with Supabase client, then calls this endpoint
 router.post('/register', authMiddleware, ctrl.register)
 router.get('/me', authMiddleware, ctrl.me)
@@ -13,3 +16,4 @@ router.post('/forgot-password', ctrl.forgotPassword)
 router.post('/reset-password', authMiddleware, ctrl.resetPassword)
 
 module.exports = router
+

@@ -57,18 +57,24 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-slate-900">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/20 via-slate-900 to-slate-900 pointer-events-none" />
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-[#07090e] overflow-hidden select-none">
+      {/* ── Glassy Ambient Glow Orbs ── */}
+      <div className="absolute -top-32 -left-32 w-96 sm:w-[500px] h-96 sm:h-[500px] bg-brand-neon/15 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-96 sm:w-[500px] h-96 sm:h-[500px] bg-emerald-500/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-slate-800/20 rounded-full blur-[110px] pointer-events-none" />
 
-      <div className="relative w-full max-w-md">
+      {/* ── Subtle Geometric Grid Overlay ── */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+
+      <div className="relative w-full max-w-md backdrop-blur-2xl bg-slate-900/60 border border-white/10 rounded-4xl p-8 sm:p-10 shadow-[0_25px_60px_rgba(0,0,0,0.65)] ring-1 ring-white/5 transition-all">
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center mb-4 shadow-lg w-14 h-14 rounded-2xl bg-emerald-600 shadow-emerald-900/50">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-neon text-slate-950 shadow-[0_0_25px_rgba(206,243,109,0.35)] mb-3">
             <svg
-              className="text-white w-7 h-7"
+              className="text-slate-950 w-7 h-7"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              strokeWidth={2}
+              strokeWidth={2.5}
             >
               <path
                 strokeLinecap="round"
@@ -77,22 +83,22 @@ export default function ResetPassword() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">Set New Password</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Enter your new password below
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Set New Password</h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            Enter your new secure password below
           </p>
         </div>
 
-        <div className="p-8 border shadow-2xl rounded-2xl border-slate-700/60 bg-slate-800/80 backdrop-blur-sm">
+        <div>
           {status === "success" ? (
             <div className="space-y-4 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 border rounded-full bg-emerald-900/50 border-emerald-700/50">
+              <div className="inline-flex items-center justify-center w-16 h-16 border rounded-full bg-emerald-950/60 border-emerald-500/30">
                 <svg
-                  className="w-8 h-8 text-emerald-400"
+                  className="w-8 h-8 text-brand-neon"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                 >
                   <path
                     strokeLinecap="round"
@@ -101,33 +107,33 @@ export default function ResetPassword() {
                   />
                 </svg>
               </div>
-              <p className="text-lg font-semibold text-white">
+              <p className="text-lg font-bold text-white">
                 Password Updated!
               </p>
-              <p className="text-sm text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-400">
                 Your password has been changed successfully. Redirecting to
                 login…
               </p>
             </div>
           ) : !sessionReady ? (
             <div className="py-4 space-y-3 text-center">
-              <div className="w-8 h-8 mx-auto border-b-2 rounded-full animate-spin border-emerald-500" />
+              <div className="w-8 h-8 mx-auto border-b-2 rounded-full animate-spin border-brand-neon" />
               <p className="text-sm text-slate-400">Verifying reset link…</p>
               <p className="mt-4 text-xs text-slate-500">
                 If this takes too long, the link may have expired.{" "}
                 <button
                   type="button"
                   onClick={() => navigate("/login")}
-                  className="text-emerald-400 hover:underline"
+                  className="text-brand-neon hover:underline"
                 >
                   Request a new one
                 </button>
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-300">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                   New Password
                 </label>
                 <input
@@ -138,11 +144,11 @@ export default function ResetPassword() {
                   required
                   minLength={8}
                   placeholder="Minimum 8 characters"
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                  className="w-full rounded-2xl border border-slate-700/70 bg-slate-800/40 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-brand-neon focus:outline-none focus:ring-1 focus:ring-brand-neon transition-all"
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-300">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
                   Confirm New Password
                 </label>
                 <input
@@ -152,7 +158,7 @@ export default function ResetPassword() {
                   onChange={(e) => setConfirm(e.target.value)}
                   required
                   placeholder="Repeat your new password"
-                  className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                  className="w-full rounded-2xl border border-slate-700/70 bg-slate-800/40 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-brand-neon focus:outline-none focus:ring-1 focus:ring-brand-neon transition-all"
                 />
               </div>
 
@@ -165,11 +171,11 @@ export default function ResetPassword() {
                       className={`h-1 flex-1 rounded-full transition-colors ${
                         password.length >= i * 3
                           ? password.length >= 12
-                            ? "bg-emerald-500"
+                            ? "bg-brand-neon"
                             : password.length >= 8
-                              ? "bg-yellow-500"
-                              : "bg-red-500"
-                          : "bg-slate-600"
+                              ? "bg-yellow-400"
+                              : "bg-red-400"
+                          : "bg-slate-700"
                       }`}
                     />
                   ))}
@@ -177,7 +183,7 @@ export default function ResetPassword() {
               )}
 
               {error && (
-                <div className="px-4 py-3 text-sm text-red-300 border rounded-lg bg-red-900/40 border-red-700/50">
+                <div className="rounded-2xl bg-red-950/50 border border-red-500/30 p-3 text-xs text-red-300">
                   {error}
                 </div>
               )}
@@ -185,17 +191,17 @@ export default function ResetPassword() {
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors shadow-md shadow-emerald-900/30"
+                className="w-full mt-2 rounded-full bg-brand-neon hover:bg-[#bde85b] py-3.5 px-6 text-sm font-bold text-slate-950 shadow-[0_4px_20px_rgba(206,243,109,0.35)] disabled:opacity-50 transition-all cursor-pointer"
               >
                 {status === "loading" ? "Updating…" : "Update Password"}
               </button>
 
-              <p className="text-xs text-center text-slate-500">
+              <p className="text-xs text-center text-slate-400 mt-2">
                 Remember your password?{" "}
                 <button
                   type="button"
                   onClick={() => navigate("/login")}
-                  className="text-emerald-400 hover:underline"
+                  className="text-brand-neon hover:underline font-semibold"
                 >
                   Back to login
                 </button>

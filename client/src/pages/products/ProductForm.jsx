@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch, getToken } from "../../utils/api";
+import CustomSelect from "../../components/common/CustomSelect";
 
 const inputClass =
   "w-full rounded-2xl border-0 bg-slate-50 px-4 py-3.5 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-neon focus:bg-white transition-all";
@@ -223,11 +224,12 @@ export default function ProductForm({ productId, shopId, onSuccess, onCancel }) 
           <label className="block mb-2 text-sm font-bold text-slate-700">
             Category
           </label>
-          <select
+          <CustomSelect
             name="category_id"
             value={form.category_id}
             onChange={handleChange}
             className={inputClass}
+            placeholder="None"
           >
             <option value="">None</option>
             {categories.map((c) => (
@@ -235,7 +237,7 @@ export default function ProductForm({ productId, shopId, onSuccess, onCancel }) 
                 {c.name}
               </option>
             ))}
-          </select>
+          </CustomSelect>
         </div>
 
         {/* Product Image */}
