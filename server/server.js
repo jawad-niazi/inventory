@@ -23,10 +23,12 @@ app.use(cors({
     const allowed = [
       'http://localhost:5173',
       'http://localhost:3000',
+      'https://vocal-fairy-4dc53a.netlify.app',
+      'https://inventory-eight-sandy.vercel.app',
       process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : null
     ].filter(Boolean);
     
-    if (allowed.includes(cleanOrigin)) {
+    if (allowed.includes(cleanOrigin) || cleanOrigin.endsWith('.vercel.app') || cleanOrigin.endsWith('.netlify.app')) {
       return callback(null, true);
     }
     
